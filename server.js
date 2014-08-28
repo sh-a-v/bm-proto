@@ -25,6 +25,10 @@ router
   });
 
 app
+  .use(express.static(config.client.staticFilesPath))
+  .use('*', router);
+
+app
   .listen(config.server.port, function () {
     console.log('Express server listening on port ' + config.server.port);
   });
