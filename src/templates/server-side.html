@@ -18,7 +18,34 @@
         </header>
 
         <stack class="s-stack">
+            <div class="s-big-book-card-wrapper" ng-swipe-left="stack.getNextBook()" ng-swipe-right="stack.getPreviousBook()">
+                <div class="s-big-book-card">
+                    <div class="s-big-book-card-cover">
+                        <img ng-src="{{ stack.currentBook.cover.url }}">
+                    </div>
+                    <div class="s-big-book-card-title" ng-bind="stack.currentBook.title"></div>
+                    <div class="s-big-book-card-authors" ng-bind="stack.currentBook.authors"></div>
+                    <div class="s-big-book-card-progress-wrapper">
+                        <div class="s-progress-value">12%</div>
+                        <div class="s-full-progress"></div>
+                        <div class="s-active-progress"></div>
+                    </div>
+                </div>
 
+                <div id="animated-book-card" class="s-animated-big-book-card">
+                    <div class="s-big-book-card-cover">
+                        <img ng-src="{{ stack.animatedBook.cover.url }}">
+                    </div>
+                    <br>
+                    <div class="s-big-book-card-title" ng-bind="stack.animatedBook.title"></div>
+                    <div class="s-big-book-card-authors" ng-bind="stack.animatedBook.authors"></div>
+                    <div class="s-big-book-card-progress-wrapper">
+                        <div class="s-progress-value">12%</div>
+                        <div class="s-full-progress"></div>
+                        <div class="s-active-progress"></div>
+                    </div>
+                </div>
+            </div>
         </stack>
 
         <div class="s-state-toggle-button" ng-click="app.toggleParentState()">

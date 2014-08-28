@@ -1,9 +1,14 @@
-app.controller('AppCtrl', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
+app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource', function ($rootScope, $scope, $state, BookListsResource) {
   $scope.app = {
     $state: $state,
     savedState: {
       home: 'home.now',
       catalog: 'catalog.all'
+    },
+
+    initialize: function () {
+      this.setBookLists();
+      //this.fetchBookLists();
     },
 
     getCurrentTitle: function () {
@@ -33,8 +38,29 @@ app.controller('AppCtrl', ['$rootScope', '$scope', '$state', function ($rootScop
       } else {
         this.$state.go(this.savedState.home);
       }
+    },
+
+    setBookLists: function () {
+      this.bookLists = [];
+    },
+
+    fetchBookLists: function () {
+      BookListsResource.query(function (res) {
+        console.log('booklists:', res);
+      });
     }
+    /*,
+
+    getBookLists: function () {
+      return this.bookLists;
+    },
+
+    fetchBookLists: function () {
+      BookListsResource.get()
+    }*/
   };
+
+  $scope.app.initialize();
 
   console.log('state:', $scope.app.$state);
 }]);

@@ -164,7 +164,7 @@ a {
   display: inline-block;
   width: 100%;
   height: 45px;
-  background-color: #f3f3f3;
+  background-color: transparent;
 }
 .s-footer-menu {
   display: none;
@@ -247,5 +247,131 @@ a {
   -moz-box-sizing: border-box;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
+  background-color: #f3f3f3;
+}
+.s-big-book-card-wrapper {
+  position: relative;
+  top: 0;
+  left: 0;
+  z-index: 3;
+  display: inline-block;
+  width: 100%;
+  height: 98%;
+}
+.s-big-book-card-wrapper .s-big-book-card,
+.s-big-book-card-wrapper .s-animated-big-book-card {
+  position: absolute;
+  left: 50%;
+  display: inline-block;
+  width: 310px;
+  height: 100%;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+  margin-left: -155px;
   background-color: #fff;
+  border: 1px solid #c1c1c1;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+  text-align: center;
+}
+.s-big-book-card-wrapper .s-big-book-card:before,
+.s-big-book-card-wrapper .s-animated-big-book-card:before,
+.s-big-book-card-wrapper .s-big-book-card:after,
+.s-big-book-card-wrapper .s-animated-big-book-card:after {
+  position: absolute;
+  top: 1px;
+  left: 1px;
+  z-index: -1;
+  display: block;
+  width: 308px;
+  height: 100%;
+  content: '';
+  background-color: #fff;
+  border: 1px solid #c1c1c1;
+  -moz-border-radius: 2px;
+  -webkit-border-radius: 2px;
+  border-radius: 2px;
+}
+.s-big-book-card-wrapper .s-big-book-card:after,
+.s-big-book-card-wrapper .s-animated-big-book-card:after {
+  top: 3px;
+  left: 3px;
+  z-index: -2;
+}
+.s-big-book-card-wrapper .s-big-book-card-cover,
+.s-big-book-card-wrapper .s-animated-big-book-card-cover {
+  position: relative;
+  display: inline-block;
+  height: 200px;
+  margin-top: 32px;
+  text-align: center;
+}
+.s-big-book-card-wrapper .s-big-book-card-cover img,
+.s-big-book-card-wrapper .s-animated-big-book-card-cover img {
+  height: 200px;
+}
+.s-big-book-card-wrapper .s-big-book-card-title,
+.s-big-book-card-wrapper .s-animated-big-book-card-title {
+  display: inline-block;
+  width: 150px;
+  max-width: 150px;
+  max-height: 36px;
+  margin-top: 8px;
+  padding: 0 50px;
+  overflow-y: hidden;
+  font-family: museo500;
+  font-size: 13px;
+  line-height: 18px;
+}
+.s-big-book-card-wrapper .s-big-book-card-authors,
+.s-big-book-card-wrapper .s-animated-big-book-card-authors {
+  display: inline-block;
+  width: 150px;
+  max-width: 150px;
+  max-height: 18px;
+  padding: 0 50px;
+  overflow-y: hidden;
+  font-family: museo300;
+  font-size: 13px;
+  line-height: 20px;
+}
+.s-big-book-card-wrapper .s-big-book-card-progress-wrapper,
+.s-big-book-card-wrapper .s-animated-big-book-card-progress-wrapper {
+  width: 100%;
+  height: 25px;
+  padding: 0 16px;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
+}
+.s-big-book-card-wrapper .s-big-book-card-progress-wrapper .s-progress-value,
+.s-big-book-card-wrapper .s-animated-big-book-card-progress-wrapper .s-progress-value {
+  width: 100%;
+  height: 15px;
+  text-align: left;
+  font-family: museo300;
+  font-size: 9px;
+  color: #979797;
+}
+.s-big-book-card-wrapper .s-big-book-card-progress-wrapper .s-full-progress,
+.s-big-book-card-wrapper .s-animated-big-book-card-progress-wrapper .s-full-progress {
+  width: 100%;
+  height: 1px;
+  background-color: #f2f2f2;
+}
+.s-big-book-card-wrapper .s-big-book-card-progress-wrapper .s-active-progress,
+.s-big-book-card-wrapper .s-animated-big-book-card-progress-wrapper .s-active-progress {
+  width: 12%;
+  height: 1px;
+  margin-top: -1px;
+  background-color: #a6cefa;
+}
+.s-big-book-card-wrapper .s-animated-big-book-card {
+  display: none;
+}
+.s-big-book-card-wrapper .s-animated-big-book-card:before,
+.s-big-book-card-wrapper .s-animated-big-book-card:after {
+  display: none;
 }
