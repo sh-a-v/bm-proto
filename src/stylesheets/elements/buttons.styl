@@ -1,0 +1,47 @@
+.s-button-icon
+  display inline-block
+  margin 0
+  padding 0
+  vertical-align middle
+
+  border none
+  font-size 0
+  cursor pointer
+
+.s-state-toggle-button
+  position fixed
+  bottom 35px
+  right 22px
+  z-index 5
+
+  display block
+  width 46px
+  height 46px
+  border-radius 46px
+
+  background-color rgba(0,0,0,0.1)
+
+  &-inner
+    display block
+    width 42px
+    height 42px
+    margin 2px
+    padding-top 6px
+    box-sizing border-box
+    border-radius 42px
+
+    cursor pointer
+    text-align center
+
+.home .s-state-toggle-button-inner
+  padding-top 8px
+  background-color #0079ff
+
+  .s-icon-home
+    display none
+
+.catalog .s-state-toggle-button-inner
+  background-color #252525
+
+  .s-icon-catalog
+    display none
