@@ -9,7 +9,13 @@ var hmGestures = [
   'hmPanLeft:panleft',
   'hmPanRight:panright',
   'hmPanUp:panup',
-  'hmPanDown:pandown'
+  'hmPanDown:pandown',
+
+  'hmSwipe:swipe',
+  'hmSwipeLeft:swipeleft',
+  'hmSwipeRight:swiperight',
+  'hmSwipeUp:swipeup',
+  'hmSwipeDown:swipedown'
 ];
 
 angular.forEach(hmGestures, function (name) {

@@ -18,7 +18,12 @@
         </header>
 
         <stack class="s-stack">
-            <div class="s-big-book-card-wrapper" ng-swipe-left="stack.getNextBook()" ng-swipe-right="stack.getPreviousBook()">
+            <div class="s-big-book-card-wrapper"
+                 hm-swipe-left="stack.getNextBookFull($event)"
+                 hm-pan-left="stack.getNextBookPartially($event)"
+                 hm-pan-right="stack.getNextBookPartially($event)"
+                 hm-pan-end="stack.endGetBookPartially($event)"
+            >
                 <div class="s-big-book-card">
                     <div class="s-big-book-card-cover">
                         <img ng-src="{{ stack.currentBook.cover.url }}">
