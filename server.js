@@ -8,7 +8,7 @@ var
 
 var config = {
   client: {
-    staticFilesPath: path.join(__dirname, 'build'),
+    staticFilesPath: path.join(__dirname, ''),
     baseTemplatePath: path.join(__dirname, 'build/templates/server-side.html')
   },
 
@@ -24,11 +24,9 @@ router
     res.sendfile(config.client.baseTemplatePath);
   });
 
-app
-  .use(express.static(config.client.staticFilesPath))
-  .use('*', router);
+app.use(express.static(config.client.staticFilesPath));
+app.use('*', router);
 
-app
-  .listen(config.server.port, function () {
-    console.log('Express server listening on port ' + config.server.port);
-  });
+app.listen(config.server.port, function () {
+  console.log('Express server listening on port ' + config.server.port);
+});

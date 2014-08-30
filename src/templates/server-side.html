@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title></title>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, minimal-ui">
-    <link rel="stylesheet" href="/stylesheets/stylus.build.min.css">
+    <link rel="stylesheet" href="/build/stylesheets/stylus.build.min.css">
 </head>
 <body>
     <main class="s-app-container" ng-class="app.getCurrentSplitStateName()" ng-controller="AppCtrl">
@@ -23,8 +23,8 @@
                  hm-swipe-right="stack.getPreviousBookFully($event)"
                  hm-pan-left="stack.getBookPartially($event)"
                  hm-pan-right="stack.getBookPartially($event)"
-                 hm-pan-end="stack.endGetBookPartially($event)"
-            >
+                 hm-pan-end="stack.endGetBookPartially($event)">
+
                 <div class="s-big-book-card">
                     <div class="s-big-book-card-cover">
                         <img ng-src="{{ stack.currentBook.cover.url }}">
@@ -77,7 +77,8 @@
             </div>
         </footer>
     </main>
-    <script src="/scripts/lib.build.min.js"></script>
-    <script src="/scripts/app.build.js"></script>
+    <script src="/config.js"></script>
+    <script src="/build/scripts/lib.build.min.js"></script>
+    <script src="/build/scripts/app.build.js"></script>
 </body>
 </html>
