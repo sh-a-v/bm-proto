@@ -12,10 +12,10 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         setEventListeners: function () {
-          scope.$on('stack:showNextBookFull', this.showNextBookCardFull.bind(this));
+          scope.$on('stack:showNextBookFully', this.showNextBookCardFully.bind(this));
           scope.$on('stack:showNextBookPartially', this.showNextBookCardPartially.bind(this));
           scope.$on('stack:endShowNextBookPartially', this.endShowNextBookCardPartially.bind(this));
-          //scope.$on('stack:showPreviousBook', showPreviousBookCard);
+          scope.$on('stack:showPreviousBookFully', this.showPreviousBookCardFully.bind(this));
         },
 
         getWindowWidth: function () {
@@ -36,14 +36,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           var animatedBookCard = this.getAnimatedBookCard();
 
           return Math.abs(Math.abs(animatedBookCard.defaultLeftValue) - Math.abs(this.getCurrentLeftValue()));
-        },
-
-        getCalculatedDuration: function () {
-          var animatedBookCard = this.getAnimatedBookCard();
-          var fullWidth = Math.abs(Math.abs(animatedBookCard.defaultLeftValue) - Math.abs(animatedBookCard.endLeftValue));
-          var diffWidth = this.isLeftDirection() ? fullWidth - this.getCurrentLeftDifferenceValue() : this.getCurrentLeftDifferenceValue();
-
-          return this.defaultDuration * diffWidth / fullWidth;
         },
 
         getAnimatedBookCard: function () {
@@ -75,7 +67,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }
 
           this.active = false;
-
           this.getAnimatedBookCard().el.style.display = 'none';
         },
 
@@ -85,29 +76,28 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         setAnimatedBookCardToEndState: function () {
+          this.getAnimatedBookCard().el.style.left = this.getAnimatedBookCard().endLeft;
           this.activateAnimatedBookCard();
-          this.getAnimatedBookCard().el.style.left = animatedBookCardEl.endLeft;
         },
 
-        showNextBookCardFull: function (e, $event) {//return;
+        showNextBookCardFully: function (e, $event) {//return;
           this.activateAnimatedBookCard();
 
-          this.bookCardShowingFull = true;
-          this.direction = 'left';
+          this.bookCardShowingFully = true;
 
           var animatedBookCard = this.getAnimatedBookCard();
-          //alert();
+
           Velocity(animatedBookCard.el, 'stop');
           Velocity(animatedBookCard.el, {
             left: animatedBookCard.endLeft
           }, {
             display: 'inline-block',
-            duration: 200, //this.getCalculatedDuration(),
+            duration: 200,
             promise: true,
             complete: function () {
               this._broadcastNextBookShown();
               this.setAnimatedBookCardToDefaultState();
-              this.bookCardShowingFull = false;
+              this.bookCardShowingFully = false;
             }.bind(this)
           }).then(function () {
           }.bind(this));
@@ -116,7 +106,7 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         showNextBookCardPartially: function (e, $event) {
-          if (this.isShowingFull()) {
+          if (this.isShowingFully()) {
             return;
           }
 
@@ -126,7 +116,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           var animatedBookCard = this.getAnimatedBookCard();
           var distance = Math.min(animatedBookCard.defaultLeftValue + $event.deltaX, animatedBookCard.defaultLeftValue);
 
-          //Velocity(animatedBookCard.el, 'stop');
           Velocity(animatedBookCard.el, {
             left: distance
           }, {
@@ -137,7 +126,7 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }.bind(this));
         },
 
-        hideNextBookCardFull: function (e, $event) {
+        hideNextBookCardFully: function (e, $event) {
           if (!this.isShowingPartially()) {
             return;
           }
@@ -151,41 +140,52 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
             display: 'inline-block',
             duration: 200,
             promise: true
-          }).then(function () {
-            //console.log('end', this.direction);
-            //
-          }.bind(this));
-
-          this.direction = 'right';
+          });
         },
 
         endShowNextBookCardPartially: function (e, $event) {
-          if (this.isShowingFull()) {
+          if (this.isShowingFully()) {
             return;
           }
 
-
           if (this.getCurrentLeftDifferenceValue() < this.getWindowWidth() / 2.5) {
-            this.hideNextBookCardFull();
+            this.hideNextBookCardFully();
           } else {
-            this.showNextBookCardFull();
+            this.showNextBookCardFully();
           }
         },
 
-        showPreviousBookCardFull: function (e, $event) {
-          this.direction = 'right';
+        showPreviousBookCardFully: function (e, $event) {
+          this.setAnimatedBookCardToEndState();
+
+          this.bookCardShowingFully = true;
+
+          var animatedBookCard = this.getAnimatedBookCard();
+
+          Velocity(animatedBookCard.el, 'stop');
+          Velocity(animatedBookCard.el, {
+            left: animatedBookCard.defaultLeft
+          }, {
+            display: 'inline-block',
+            duration: 200,
+            promise: true,
+            complete: function () {
+              //this._broadcastPreviousBookShown();
+              //this.setAnimatedBookCardToDefaultState();
+              this.bookCardShowingFully = false;
+            }.bind(this)
+          }).then(function () {
+          }.bind(this));
+
+          this.bookCardShowingPartially = false;
         },
 
-        isShowingFull: function () {
-          return this.bookCardShowingFull;
+        isShowingFully: function () {
+          return this.bookCardShowingFully;
         },
 
         isShowingPartially: function () {
           return this.bookCardShowingPartially;
-        },
-
-        isLeftDirection: function () {
-          return this.direction === 'left';
         },
 
         _broadcastNextBookShown: function () {

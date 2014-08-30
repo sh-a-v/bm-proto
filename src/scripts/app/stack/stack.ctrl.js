@@ -1,6 +1,7 @@
 app.stack
   .controller('StackCtrl', ['$rootScope', '$scope', '$state', 'UserBookListReadNowResource', function ($rootScope, $scope, $state, UserBookListReadNowResource) {
     $scope.stack = {
+      distance: 0,
       currentBook: null,
       animatedBook: null,
 
@@ -10,8 +11,8 @@ app.stack
       },
 
       setEventListeners: function () {
-        $scope.$on('stack:nextBookShown', this.setAnimatedBookDefaultState.bind(this));
-        $scope.$on('stack:previousBookShown', this.setCurrentBookToAnimatedBook.bind(this));
+        $scope.$on('stack:nextBookShown', this.setDefaultStateAfterNextBookShown.bind(this));
+        $scope.$on('stack:previousBookShown', this.setDefaultStateAfterPreviousBookShown.bind(this));
       },
 
       setUserBookListReadNow: function (res) {
@@ -42,12 +43,29 @@ app.stack
         this.previousBook = previousIndex >= 0 ? this.currentBookList[previousIndex] : null;
       },
 
-      setAnimatedBookDefaultState: function () {
+      setDefaultStateAfterNextBookShown: function () {
         this.setAnimatedBook(this.currentBook);
+
         this.bookShowingPartially = false;
-        this.bookShowingFull = false;
+        this.bookShowingFully = false;
+        this.firstBookShowed = false;
+        this.distance = 0;
+
         if (!this.nextBook) {
           this.lastBookShowed = true;
+        }
+      },
+
+      setDefaultStateAfterPreviousBookShown: function () {
+        this.setCurrentBook(this.animatedBook);
+
+        this.bookShowingPartially = false;
+        this.bookShowingFully = false;
+        this.lastBookShowed = false;
+        this.distance = 0;
+
+        if (!this.previousBook) {
+          this.firstBookShowed = true;
         }
       },
 
@@ -61,8 +79,8 @@ app.stack
           .then(this.setUserBookListReadNow.bind(this));
       },
 
-      getNextBookFull: function ($event) {
-        this.bookShowingFull = true;
+      getNextBookFully: function ($event) {
+        this.bookShowingFully = true;
 
         if (!this.isBookShowingPartially()) {
           if (!this.nextBook) {
@@ -72,16 +90,35 @@ app.stack
           this.setCurrentBook(this.nextBook);
         }
 
-        this._broadcastShowNextBookFull($event);
+        this._broadcastShowNextBookFully($event);
       },
 
-      getNextBookPartially: function ($event) {
-        if (this.isBookShowingFull()) {
+      getPreviousBookFully: function ($event) {
+        this.bookShowingFully = true;
+
+        if (!this.isBookShowingPartially()) {
+          if (!this.previousBook) {
+            return;
+          }
+
+          this.setCurrentBook(this.nextBook);
+        }
+
+        this._broadcastShowPreviousBookFully($event);
+      },
+
+      getBookPartially: function ($event) {
+        if (this.isBookShowingFully()) {
           return;
         }
 
+        this.distance = this.distance ? this.distance + $event.clientX : $event.clientX;
+
+        this.distance <= 0 ? this.getNextBookPartially($event) : this.getPreviousBookPartially($event);
+      },
+
+      getNextBookPartially: function ($event) {
         if (!this.nextBook && this.isLastBookShowed()) {
-          //alert(this.nextBook);
           return;
         }
 
@@ -91,55 +128,43 @@ app.stack
         }
 
         this._broadcastShowNextBookPartially($event);
-        //console.log('event partially');
       },
 
-      getNextBook: function ($event) {
-        var nextIndex = this.currentBookList.indexOf(this.currentBook) + 1;
-
-        if (nextIndex > this.currentBookList.length - 1) {
+      getPreviousBookPartially: function ($event) {
+        if (!this.previousBook && this.isFirstBookShowed()) {
           return;
         }
 
-        this.currentBook = this.currentBookList[nextIndex];
-
-        this._broadcastShowNextBook($event);
-      },
-
-      getPreviousBook: function () {
-        var previousIndex = this.currentBookList.indexOf(this.currentBook) - 1;
-
-        if (previousIndex < 0) {
-          return;
+        if (!this.isBookShowingPartially()) {
+          this.bookShowingPartially = true;
+          this.setCurrentBook(this.nextBook);
         }
 
-        this.animatedBook = this.currentBookList[previousIndex];
-
-        this._broadcastShowPreviousBook();
+        this._broadcastShowNextBookPartially($event);
       },
 
       endGetBookPartially: function ($event) {
         this._broadcastEndShowBookPartially($event);
       },
 
-      testHammer: function ($event) {
-        console.log($event);
-      },
-
-      isBookShowingFull: function () {
-        return this.bookShowingFull;
+      isBookShowingFully: function () {
+        return this.bookShowingFully;
       },
 
       isLastBookShowed: function () {
         return this.lastBookShowed;
       },
 
+      isFirstBookShowed: function () {
+        return this.firstBookShowed;
+      },
+
       isBookShowingPartially: function () {
         return this.bookShowingPartially;
       },
 
-      _broadcastShowNextBookFull: function ($event) {
-        $scope.$broadcast('stack:showNextBookFull', $event);
+      _broadcastShowNextBookFully: function ($event) {
+        $scope.$broadcast('stack:showNextBookFully', $event);
       },
 
       _broadcastShowNextBookPartially: function ($event) {
@@ -150,8 +175,8 @@ app.stack
         $scope.$broadcast('stack:showNextBook', $event);
       },
 
-      _broadcastShowPreviousBook: function () {
-        $scope.$broadcast('stack:showPreviousBook');
+      _broadcastShowPreviousBookFully: function ($event) {
+        $scope.$broadcast('stack:showPreviousBookFully');
       },
 
       _broadcastEndShowBookPartially: function ($event) {

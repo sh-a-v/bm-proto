@@ -54,10 +54,6 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
     .defaults.stripTrailingSlashes = true;
 });
 
-var apiHref = 'https://bookmate.com';
-var apiToken = 'P1Rc2q7Ka1tVE4gojBh1rr3zeDNo3rbF';
-var apiLogin = 'shershnevav';
-
 app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource', function ($rootScope, $scope, $state, BookListsResource) {
   $scope.app = {
     $state: $state,
@@ -186,6 +182,7 @@ angular.forEach(hmGestures, function (name) {
 app.stack
   .controller('StackCtrl', ['$rootScope', '$scope', '$state', 'UserBookListReadNowResource', function ($rootScope, $scope, $state, UserBookListReadNowResource) {
     $scope.stack = {
+      distance: 0,
       currentBook: null,
       animatedBook: null,
 
@@ -195,8 +192,8 @@ app.stack
       },
 
       setEventListeners: function () {
-        $scope.$on('stack:nextBookShown', this.setAnimatedBookDefaultState.bind(this));
-        $scope.$on('stack:previousBookShown', this.setCurrentBookToAnimatedBook.bind(this));
+        $scope.$on('stack:nextBookShown', this.setDefaultStateAfterNextBookShown.bind(this));
+        $scope.$on('stack:previousBookShown', this.setDefaultStateAfterPreviousBookShown.bind(this));
       },
 
       setUserBookListReadNow: function (res) {
@@ -227,12 +224,29 @@ app.stack
         this.previousBook = previousIndex >= 0 ? this.currentBookList[previousIndex] : null;
       },
 
-      setAnimatedBookDefaultState: function () {
+      setDefaultStateAfterNextBookShown: function () {
         this.setAnimatedBook(this.currentBook);
+
         this.bookShowingPartially = false;
-        this.bookShowingFull = false;
+        this.bookShowingFully = false;
+        this.firstBookShowed = false;
+        this.distance = 0;
+
         if (!this.nextBook) {
           this.lastBookShowed = true;
+        }
+      },
+
+      setDefaultStateAfterPreviousBookShown: function () {
+        this.setCurrentBook(this.animatedBook);
+
+        this.bookShowingPartially = false;
+        this.bookShowingFully = false;
+        this.lastBookShowed = false;
+        this.distance = 0;
+
+        if (!this.previousBook) {
+          this.firstBookShowed = true;
         }
       },
 
@@ -246,8 +260,8 @@ app.stack
           .then(this.setUserBookListReadNow.bind(this));
       },
 
-      getNextBookFull: function ($event) {
-        this.bookShowingFull = true;
+      getNextBookFully: function ($event) {
+        this.bookShowingFully = true;
 
         if (!this.isBookShowingPartially()) {
           if (!this.nextBook) {
@@ -257,16 +271,35 @@ app.stack
           this.setCurrentBook(this.nextBook);
         }
 
-        this._broadcastShowNextBookFull($event);
+        this._broadcastShowNextBookFully($event);
       },
 
-      getNextBookPartially: function ($event) {
-        if (this.isBookShowingFull()) {
+      getPreviousBookFully: function ($event) {
+        this.bookShowingFully = true;
+
+        if (!this.isBookShowingPartially()) {
+          if (!this.previousBook) {
+            return;
+          }
+
+          this.setCurrentBook(this.nextBook);
+        }
+
+        this._broadcastShowPreviousBookFully($event);
+      },
+
+      getBookPartially: function ($event) {
+        if (this.isBookShowingFully()) {
           return;
         }
 
+        this.distance = this.distance ? this.distance + $event.clientX : $event.clientX;
+
+        this.distance <= 0 ? this.getNextBookPartially($event) : this.getPreviousBookPartially($event);
+      },
+
+      getNextBookPartially: function ($event) {
         if (!this.nextBook && this.isLastBookShowed()) {
-          //alert(this.nextBook);
           return;
         }
 
@@ -276,55 +309,43 @@ app.stack
         }
 
         this._broadcastShowNextBookPartially($event);
-        //console.log('event partially');
       },
 
-      getNextBook: function ($event) {
-        var nextIndex = this.currentBookList.indexOf(this.currentBook) + 1;
-
-        if (nextIndex > this.currentBookList.length - 1) {
+      getPreviousBookPartially: function ($event) {
+        if (!this.previousBook && this.isFirstBookShowed()) {
           return;
         }
 
-        this.currentBook = this.currentBookList[nextIndex];
-
-        this._broadcastShowNextBook($event);
-      },
-
-      getPreviousBook: function () {
-        var previousIndex = this.currentBookList.indexOf(this.currentBook) - 1;
-
-        if (previousIndex < 0) {
-          return;
+        if (!this.isBookShowingPartially()) {
+          this.bookShowingPartially = true;
+          this.setCurrentBook(this.nextBook);
         }
 
-        this.animatedBook = this.currentBookList[previousIndex];
-
-        this._broadcastShowPreviousBook();
+        this._broadcastShowNextBookPartially($event);
       },
 
       endGetBookPartially: function ($event) {
         this._broadcastEndShowBookPartially($event);
       },
 
-      testHammer: function ($event) {
-        console.log($event);
-      },
-
-      isBookShowingFull: function () {
-        return this.bookShowingFull;
+      isBookShowingFully: function () {
+        return this.bookShowingFully;
       },
 
       isLastBookShowed: function () {
         return this.lastBookShowed;
       },
 
+      isFirstBookShowed: function () {
+        return this.firstBookShowed;
+      },
+
       isBookShowingPartially: function () {
         return this.bookShowingPartially;
       },
 
-      _broadcastShowNextBookFull: function ($event) {
-        $scope.$broadcast('stack:showNextBookFull', $event);
+      _broadcastShowNextBookFully: function ($event) {
+        $scope.$broadcast('stack:showNextBookFully', $event);
       },
 
       _broadcastShowNextBookPartially: function ($event) {
@@ -335,8 +356,8 @@ app.stack
         $scope.$broadcast('stack:showNextBook', $event);
       },
 
-      _broadcastShowPreviousBook: function () {
-        $scope.$broadcast('stack:showPreviousBook');
+      _broadcastShowPreviousBookFully: function ($event) {
+        $scope.$broadcast('stack:showPreviousBookFully');
       },
 
       _broadcastEndShowBookPartially: function ($event) {
@@ -361,10 +382,10 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         setEventListeners: function () {
-          scope.$on('stack:showNextBookFull', this.showNextBookCardFull.bind(this));
+          scope.$on('stack:showNextBookFully', this.showNextBookCardFully.bind(this));
           scope.$on('stack:showNextBookPartially', this.showNextBookCardPartially.bind(this));
           scope.$on('stack:endShowNextBookPartially', this.endShowNextBookCardPartially.bind(this));
-          //scope.$on('stack:showPreviousBook', showPreviousBookCard);
+          scope.$on('stack:showPreviousBookFully', this.showPreviousBookCardFully.bind(this));
         },
 
         getWindowWidth: function () {
@@ -385,14 +406,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           var animatedBookCard = this.getAnimatedBookCard();
 
           return Math.abs(Math.abs(animatedBookCard.defaultLeftValue) - Math.abs(this.getCurrentLeftValue()));
-        },
-
-        getCalculatedDuration: function () {
-          var animatedBookCard = this.getAnimatedBookCard();
-          var fullWidth = Math.abs(Math.abs(animatedBookCard.defaultLeftValue) - Math.abs(animatedBookCard.endLeftValue));
-          var diffWidth = this.isLeftDirection() ? fullWidth - this.getCurrentLeftDifferenceValue() : this.getCurrentLeftDifferenceValue();
-
-          return this.defaultDuration * diffWidth / fullWidth;
         },
 
         getAnimatedBookCard: function () {
@@ -424,7 +437,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }
 
           this.active = false;
-
           this.getAnimatedBookCard().el.style.display = 'none';
         },
 
@@ -434,29 +446,28 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         setAnimatedBookCardToEndState: function () {
+          this.getAnimatedBookCard().el.style.left = this.getAnimatedBookCard().endLeft;
           this.activateAnimatedBookCard();
-          this.getAnimatedBookCard().el.style.left = animatedBookCardEl.endLeft;
         },
 
-        showNextBookCardFull: function (e, $event) {//return;
+        showNextBookCardFully: function (e, $event) {//return;
           this.activateAnimatedBookCard();
 
-          this.bookCardShowingFull = true;
-          this.direction = 'left';
+          this.bookCardShowingFully = true;
 
           var animatedBookCard = this.getAnimatedBookCard();
-          //alert();
+
           Velocity(animatedBookCard.el, 'stop');
           Velocity(animatedBookCard.el, {
             left: animatedBookCard.endLeft
           }, {
             display: 'inline-block',
-            duration: 200, //this.getCalculatedDuration(),
+            duration: 200,
             promise: true,
             complete: function () {
               this._broadcastNextBookShown();
               this.setAnimatedBookCardToDefaultState();
-              this.bookCardShowingFull = false;
+              this.bookCardShowingFully = false;
             }.bind(this)
           }).then(function () {
           }.bind(this));
@@ -465,7 +476,7 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         showNextBookCardPartially: function (e, $event) {
-          if (this.isShowingFull()) {
+          if (this.isShowingFully()) {
             return;
           }
 
@@ -475,7 +486,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           var animatedBookCard = this.getAnimatedBookCard();
           var distance = Math.min(animatedBookCard.defaultLeftValue + $event.deltaX, animatedBookCard.defaultLeftValue);
 
-          //Velocity(animatedBookCard.el, 'stop');
           Velocity(animatedBookCard.el, {
             left: distance
           }, {
@@ -486,7 +496,7 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }.bind(this));
         },
 
-        hideNextBookCardFull: function (e, $event) {
+        hideNextBookCardFully: function (e, $event) {
           if (!this.isShowingPartially()) {
             return;
           }
@@ -500,41 +510,52 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
             display: 'inline-block',
             duration: 200,
             promise: true
-          }).then(function () {
-            //console.log('end', this.direction);
-            //
-          }.bind(this));
-
-          this.direction = 'right';
+          });
         },
 
         endShowNextBookCardPartially: function (e, $event) {
-          if (this.isShowingFull()) {
+          if (this.isShowingFully()) {
             return;
           }
 
-
           if (this.getCurrentLeftDifferenceValue() < this.getWindowWidth() / 2.5) {
-            this.hideNextBookCardFull();
+            this.hideNextBookCardFully();
           } else {
-            this.showNextBookCardFull();
+            this.showNextBookCardFully();
           }
         },
 
-        showPreviousBookCardFull: function (e, $event) {
-          this.direction = 'right';
+        showPreviousBookCardFully: function (e, $event) {
+          this.setAnimatedBookCardToEndState();
+
+          this.bookCardShowingFully = true;
+
+          var animatedBookCard = this.getAnimatedBookCard();
+
+          Velocity(animatedBookCard.el, 'stop');
+          Velocity(animatedBookCard.el, {
+            left: animatedBookCard.defaultLeft
+          }, {
+            display: 'inline-block',
+            duration: 200,
+            promise: true,
+            complete: function () {
+              //this._broadcastPreviousBookShown();
+              //this.setAnimatedBookCardToDefaultState();
+              this.bookCardShowingFully = false;
+            }.bind(this)
+          }).then(function () {
+          }.bind(this));
+
+          this.bookCardShowingPartially = false;
         },
 
-        isShowingFull: function () {
-          return this.bookCardShowingFull;
+        isShowingFully: function () {
+          return this.bookCardShowingFully;
         },
 
         isShowingPartially: function () {
           return this.bookCardShowingPartially;
-        },
-
-        isLeftDirection: function () {
-          return this.direction === 'left';
         },
 
         _broadcastNextBookShown: function () {
@@ -549,17 +570,17 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
 app.stack
   .factory('BookListsResource', ['$resource', function ($resource) {
-    return $resource(apiHref + '/a/4/lists.json', {'auth_token': apiToken});
+    return $resource(CONFIG.api.href + '/a/4/lists.json', {'auth_token': CONFIG.api.token});
   }])
 
   .factory('UserBookListReadNowResource', ['$resource', function ($resource) {
-    return $resource(apiHref + '/a/4/u/' + apiLogin + '/d/now_reading.json');
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/d/now_reading.json');
   }])
 
   .factory('UserBookListReadWantResource', ['$resource', function ($resource) {
-    return $resource(apiHref + '/a/4/u/' + apiLogin + '/d/read_later.json');
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/d/read_later.json');
   }])
 
   .factory('UserBookListAllResource', ['$resource', function ($resource) {
-    return $resource(apiHref + '/a/4/u/' + apiLogin + '/d/all.json');
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/d/all.json');
   }]);

@@ -19,9 +19,10 @@
 
         <stack class="s-stack">
             <div class="s-big-book-card-wrapper"
-                 hm-swipe-left="stack.getNextBookFull($event)"
-                 hm-pan-left="stack.getNextBookPartially($event)"
-                 hm-pan-right="stack.getNextBookPartially($event)"
+                 hm-swipe-left="stack.getNextBookFully($event)"
+                 hm-swipe-right="stack.getPreviousBookFully($event)"
+                 hm-pan-left="stack.getBookPartially($event)"
+                 hm-pan-right="stack.getBookPartially($event)"
                  hm-pan-end="stack.endGetBookPartially($event)"
             >
                 <div class="s-big-book-card">

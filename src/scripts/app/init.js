@@ -53,7 +53,3 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
   $resourceProvider
     .defaults.stripTrailingSlashes = true;
 });
-
-var apiHref = 'https://bookmate.com';
-var apiToken = 'P1Rc2q7Ka1tVE4gojBh1rr3zeDNo3rbF';
-var apiLogin = 'shershnevav';
