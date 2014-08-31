@@ -4,12 +4,11 @@
   display block
   width 100%
   height 100%
-  padding-bottom header-height + footer-height
   box-sizing border-box
 
   background-color background-color
 
-.s-big-book-card-wrapper
+.s-big-item-card-wrapper
   position relative
   top 0
   left 0
@@ -19,7 +18,7 @@
   width 100%
   height 98%
 
-  .s-big-book-card, .s-animated-big-book-card
+  .s-big-item-card, .s-animated-big-item-card
     position absolute
     left 50%
 
@@ -54,19 +53,47 @@
       left 3px
       z-index -2
 
-    &-cover
+    &-inner
+      display inline-block
+      width 100%
+      height 100%
+
+  .s-animated-big-item-card
+    display none
+
+    &:before, &:after
+      display none
+
+  .book
+    .cover
       position relative
 
       display inline-block
       height 200px
+      width 100%
       margin-top 32px
 
       text-align center
 
-      img
+      .s-img
         height 200px
 
-    &-title
+        box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
+
+      .s-blank
+        display inline-block
+        height 200px
+        width 130px
+        padding 20px 10px
+        box-sizing border-box
+        overflow: hidden;
+
+        border 1px
+        background: #f6f4ee;
+        box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
+        text-align center
+
+    .title
       display inline-block
       width 150px
       max-width 150px
@@ -79,7 +106,7 @@
       font-size 13px
       line-height 18px
 
-    &-authors
+    .authors
       display inline-block
       width 150px
       max-width 150px
@@ -91,7 +118,7 @@
       font-size 13px
       line-height 20px
 
-    &-progress-wrapper
+    .progress-wrapper
       width 100%
       height 25px
       padding 0 16px
@@ -117,8 +144,14 @@
         margin-top -1px
         background-color #a6cefa
 
-  .s-animated-big-book-card
+  .quote
     display none
 
-    &:before, &:after
-      display none
+  .shelf
+    display none
+
+.s-hidden-next-cover
+  position absolute
+  top 25px
+  left 25%
+  z-index -1

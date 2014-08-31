@@ -12,47 +12,12 @@
         <header class="s-header">
             <span ng-bind="app.getCurrentTitle()"></span>
             <div class="s-header-buttons">
-                <button class="s-button-icon" ng-click=""><i class="s-icon s-icon-search"></i></button>
-                <button class="s-button-icon" ng-click=""><i class="s-icon s-icon-comment"></i></button>
+                <button class="s-button-icon" ng-click="popup.activate()"><i class="s-icon s-icon-search"></i></button>
+                <button class="s-button-icon" ng-click="popup.activate()"><i class="s-icon s-icon-comment"></i></button>
             </div>
         </header>
 
-        <stack class="s-stack">
-            <div class="s-big-book-card-wrapper"
-                 hm-swipe-left="stack.getNextBookFully($event)"
-                 hm-swipe-right="stack.getPreviousBookFully($event)"
-                 hm-pan-left="stack.getBookPartially($event)"
-                 hm-pan-right="stack.getBookPartially($event)"
-                 hm-pan-end="stack.endGetBookPartially($event)">
-
-                <div class="s-big-book-card">
-                    <div class="s-big-book-card-cover">
-                        <img ng-src="{{ stack.currentBook.cover.url }}">
-                    </div>
-                    <div class="s-big-book-card-title" ng-bind="stack.currentBook.title"></div>
-                    <div class="s-big-book-card-authors" ng-bind="stack.currentBook.authors"></div>
-                    <div class="s-big-book-card-progress-wrapper">
-                        <div class="s-progress-value">12%</div>
-                        <div class="s-full-progress"></div>
-                        <div class="s-active-progress"></div>
-                    </div>
-                </div>
-
-                <div id="animated-book-card" class="s-animated-big-book-card">
-                    <div class="s-big-book-card-cover">
-                        <img ng-src="{{ stack.animatedBook.cover.url }}">
-                    </div>
-                    <br>
-                    <div class="s-big-book-card-title" ng-bind="stack.animatedBook.title"></div>
-                    <div class="s-big-book-card-authors" ng-bind="stack.animatedBook.authors"></div>
-                    <div class="s-big-book-card-progress-wrapper">
-                        <div class="s-progress-value">12%</div>
-                        <div class="s-full-progress"></div>
-                        <div class="s-active-progress"></div>
-                    </div>
-                </div>
-            </div>
-        </stack>
+        <div class="s-content-container" ui-view=""></div>
 
         <div class="s-state-toggle-button" ng-click="app.toggleParentState()">
             <div class="s-state-toggle-button-inner">
@@ -76,9 +41,15 @@
                 <a class="s-footer-menu-item" ng-click="app.goToState('catalog.shelves')" ui-sref="catalog.shelves" ui-sref-active="hidden">Shelves</a>
             </div>
         </footer>
+
+        <div id="popup-wrapper" class="s-popup-wrapper" ng-click="popup.deactivate()">
+            <popup id="popup" class="s-popup" ng-click="$event.stopPropagation()"></popup>
+        </div>
+
     </main>
     <script src="/config.js"></script>
     <script src="/build/scripts/lib.build.min.js"></script>
     <script src="/build/scripts/app.build.js"></script>
+    <script src="/build/templates/client-side.build.js"></script>
 </body>
 </html>

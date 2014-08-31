@@ -1,69 +1,80 @@
-app.stack
-  .controller('StackCtrl', ['$rootScope', '$scope', '$state', 'UserBookListReadNowResource', function ($rootScope, $scope, $state, UserBookListReadNowResource) {
+app.stack.controller('StackCtrl', [
+  '$rootScope', '$scope', '$state', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource',
+  function ($rootScope, $scope, $state, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource) {
     $scope.stack = {
       distance: 0,
-      currentBook: null,
-      animatedBook: null,
-      firstBookShowed: true,
+      currentItem: null,
+      animatedItem: null,
+      firstItemShowed: true,
+
+      resources: {
+        'UserBookListReadNowResource': UserBookListReadNowResource,
+        'UserBookListReadWantResource': UserBookListReadWantResource,
+        'UserBookListAllResource': UserBookListAllResource,
+        'UserMarkersResource': UserMarkersResource,
+        'CatalogBestResource': CatalogBestResource,
+        'CatalogNewResource': CatalogNewResource,
+        'CatalogPopularResource': CatalogPopularResource,
+        'CatalogFriendsResource': CatalogFriendsResource
+      },
 
       initialize: function () {
         this.setEventListeners();
-        this.fetchUserBookListReadNow();
+        this.fetchUserItemList();
       },
 
       setEventListeners: function () {
-        $scope.$on('stack:nextBookShown', this.setDefaultStateAfterNextBookShown.bind(this));
-        $scope.$on('stack:previousBookShown', this.setDefaultStateAfterPreviousBookShown.bind(this));
+        $scope.$on('stack:nextItemShown', this.setDefaultStateAfterNextItemShown.bind(this));
+        $scope.$on('stack:previousItemShown', this.setDefaultStateAfterPreviousItemShown.bind(this));
 
-        $scope.$on('stack:nextBookHidden', this.setDefaultStateAfterNextBookHidden.bind(this));
-        $scope.$on('stack:previousBookHidden', this.setDefaultStateAfterPreviousBookHidden.bind(this));
+        $scope.$on('stack:nextItemHidden', this.setDefaultStateAfterNextItemHidden.bind(this));
+        $scope.$on('stack:previousItemHidden', this.setDefaultStateAfterPreviousItemHidden.bind(this));
       },
 
-      setUserBookListReadNow: function (res) {
-        this.userBookListReadNow = res;
+      setUserItemList: function (res) {
+        this.currentItemList = this._handleRes(res);
 
-        this.currentBookList = this.userBookListReadNow;
-        this.setCurrentBook();
-        this.setAnimatedBook(this.currentBook);
+        this.setCurrentItem();
+        this.setAnimatedItem(this.currentItem);
       },
 
-      setCurrentBook: function (book) {
-        this.currentBook = book || this.currentBookList[0];
-        this._setNextBook();
-        this._setPreviousBook();
+      setCurrentItem: function (item) {
+        this.currentItem = item || this.currentItemList[0];
+        this._setNextItem();
+        this._setPreviousItem();
       },
 
-      setAnimatedBook: function (book) {
-        this.animatedBook = book || this.currentBook;
+      setAnimatedItem: function (item) {
+        this.animatedItem = item || this.currentItem;
       },
 
-      _setNextBook: function () {
-        var nextIndex = this.currentBookList.indexOf(this.currentBook) + 1;
-        this.nextBook = nextIndex <= this.currentBookList.length - 1 ? this.currentBookList[nextIndex] : null;
+      _setNextItem: function () {
+        var nextIndex = this.currentItemList.indexOf(this.currentItem) + 1;
+        this.nextItem = nextIndex <= this.currentItemList.length - 1 ? this.currentItemList[nextIndex] : null;
       },
 
-      _setPreviousBook: function () {
-        var previousIndex = this.currentBookList.indexOf(this.currentBook) - 1;
-        this.previousBook = previousIndex >= 0 ? this.currentBookList[previousIndex] : null;
+      _setPreviousItem: function () {
+        var previousIndex = this.currentItemList.indexOf(this.currentItem) - 1;
+        this.previousItem = previousIndex >= 0 ? this.currentItemList[previousIndex] : null;
       },
 
-      setDefaultStateAfterNextBookShown: function () {
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterNextItemShown: function () {
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
-      setDefaultStateAfterNextBookHidden: function () {
-        this.setCurrentBook(this.animatedBook);
+      setDefaultStateAfterNextItemHidden: function () {
+        this.setCurrentItem(this.animatedItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
-      setDefaultStateAfterPreviousBookShown: function () {
-        this.setCurrentBook(this.animatedBook);
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterPreviousItemShown: function () {
+        this.setCurrentItem(this.animatedItem);
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
@@ -71,149 +82,186 @@ app.stack
         $scope.$apply();
       },
 
-      setDefaultStateAfterPreviousBookHidden: function () {
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterPreviousItemHidden: function () {
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
       _setDefaultValues: function () {
-        this.bookShowingPartially = false;
-        this.bookShowingFully = false;
-        this.firstBookShowed = false;
-        this.lastBookShowed = !this.nextBook;
-        this.firstBookShowed = !this.previousBook;
+        this.itemShowingPartially = false;
+        this.itemShowingFully = false;
+        this.firstItemShowed = false;
+        this.lastItemShowed = !this.nextItem;
+        this.firstItemShowed = !this.previousItem;
       },
 
-      fetchUserBookListReadNow: function () {
-        UserBookListReadNowResource
+      _handleRes: function (res) {
+        if (angular.isObject(res) && res.objects) {
+          res = res.objects;
+        }
+
+        angular.forEach(res, function (item) {
+          item.type = $state.$current.type || '';
+        }.bind(this));
+
+        if ($state.$current.resource === 'UserMarkersResource') {
+          var markersRes = [];
+
+          angular.forEach(res, function (markers) {
+            angular.forEach(markers[0], function (marker) {
+              marker.type = 'quote';
+              markersRes.push(marker);
+            })
+          }.bind(this));
+
+          res = markersRes;
+        }
+
+        if (res.length === 0 || res.length === 1) {
+          this.lastItemShowed = true;
+        }
+
+        return res;
+      },
+
+      fetchUserItemList: function () {
+        this.currentResource = this.resources[$state.$current.resource];
+
+        if (!this.currentResource) {
+          return;
+        }
+
+        this.currentResource
           .query().$promise
-          .then(this.setUserBookListReadNow.bind(this));
+          .then(this.setUserItemList.bind(this));
       },
 
-      getNextBookFully: function ($event) {
-        this.bookShowingFully = true;
-
-        if (!this.isBookShowingPartially()) {
-          if (!this.nextBook) {
+      getNextItemFully: function ($event) {
+        console.log('next fully');
+        if (!this.isItemShowingPartially()) {
+          if (!this.nextItem) {
             return;
           }
 
-          this.setCurrentBook(this.nextBook);
+          this.setCurrentItem(this.nextItem);
         }
 
-        this._broadcastShowNextBookFully($event);
+        this.itemShowingFully = true;
+
+        this._broadcastShowNextItemFully($event);
       },
 
-      getPreviousBookFully: function ($event) {
-        this.bookShowingFully = true;
-
-        if (!this.isBookShowingPartially()) {
-          if (!this.previousBook) {
+      getPreviousItemFully: function ($event) {
+        if (!this.isItemShowingPartially()) {
+          if (!this.previousItem) {
             return;
           }
 
-          this.setAnimatedBook(this.previousBook);
+          this.setAnimatedItem(this.previousItem);
         }
 
-        this._broadcastShowPreviousBookFully($event);
+        this.itemShowingFully = true;
+
+        this._broadcastShowPreviousItemFully($event);
       },
 
-      getBookPartially: function ($event) {
-        if (this.isBookShowingFully()) {
+      getItemPartially: function ($event) {
+        if (this.isItemShowingFully()) {
           this.cleanDistance();
           return;
         }
 
-        this.distance = this.distance ? this.distance + $event.deltaX : $event.deltaX;
+        this.previousDistance = this.distance || 0;
+        this.distance = $event.deltaX;
+
+        if (this.previousDistance < 0 && this.distance > 0) {
+          this.distance = -1;
+        }
 
         if (this.distance < 0) {
-          this.getNextBookPartially($event);
+          this.getNextItemPartially($event);
         } else if (this.distance > 0) {
-          this.getPreviousBookPartially($event);
+          this.getPreviousItemPartially($event);
         }
       },
 
-      getNextBookPartially: function ($event) {
-        if (!this.nextBook && this.isLastBookShowed()) {
+      getNextItemPartially: function ($event) {
+        if (!this.nextItem && this.isLastItemShowed()) {
           this.cleanDistance();
           return;
         }
 
-        if (!this.isBookShowingPartially()) {
-          this.bookShowingPartially = true;
-          this.setCurrentBook(this.nextBook);
+        if (!this.isItemShowingPartially()) {
+          this.itemShowingPartially = true;
+          this.setCurrentItem(this.nextItem);
         }
 
-        this._broadcastShowNextBookPartially($event);
-        console.log('getNextBookPartially');
+        this._broadcastShowNextItemPartially($event);
       },
 
-      getPreviousBookPartially: function ($event) {
-        console.log('1', !this.previousBook);
-        console.log('2', this.isFirstBookShowed());
-
-        if (!this.previousBook && this.isFirstBookShowed()) {
+      getPreviousItemPartially: function ($event) {
+        if (!this.previousItem && this.isFirstItemShowed()) {
           this.cleanDistance();
           return;
         }
-        console.log('getPreviousBookPartially');
-        if (!this.isBookShowingPartially()) {
-          this.bookShowingPartially = true;
-          this.setAnimatedBook(this.previousBook);
+
+        if (!this.isItemShowingPartially()) {
+          this.itemShowingPartially = true;
+          this.setAnimatedItem(this.previousItem);
         }
 
-        this._broadcastShowPreviousBookPartially($event);
+        this._broadcastShowPreviousItemPartially($event);
 
       },
 
-      endGetBookPartially: function ($event) {
-        if (!this.isBookShowingPartially()) {
+      endGetItemPartially: function ($event) {
+        if (!this.isItemShowingPartially()) {
           return;
         }
 
-        this._broadcastEndShowBookPartially($event, this.distance);
+        this._broadcastEndShowItemPartially($event, this.distance);
       },
 
       cleanDistance: function () {
         this.distance = 0;
       },
 
-      isBookShowingFully: function () {
-        return this.bookShowingFully;
+      isItemShowingFully: function () {
+        return this.itemShowingFully;
       },
 
-      isLastBookShowed: function () {
-        return this.lastBookShowed;
+      isLastItemShowed: function () {
+        return this.lastItemShowed;
       },
 
-      isFirstBookShowed: function () {
-        return this.firstBookShowed;
+      isFirstItemShowed: function () {
+        return this.firstItemShowed;
       },
 
-      isBookShowingPartially: function () {
-        return this.bookShowingPartially;
+      isItemShowingPartially: function () {
+        return this.itemShowingPartially;
       },
 
-      _broadcastShowNextBookFully: function ($event) {
-        $scope.$broadcast('stack:showNextBookFully', $event);
+      _broadcastShowNextItemFully: function ($event) {
+        $scope.$broadcast('stack:showNextItemFully', $event);
       },
 
-      _broadcastShowNextBookPartially: function ($event) {
-        $scope.$broadcast('stack:showNextBookPartially', $event);
+      _broadcastShowNextItemPartially: function ($event) {
+        $scope.$broadcast('stack:showNextItemPartially', $event);
       },
 
-      _broadcastShowPreviousBookFully: function ($event) {
-        $scope.$broadcast('stack:showPreviousBookFully', $event);
+      _broadcastShowPreviousItemFully: function ($event) {
+        $scope.$broadcast('stack:showPreviousItemFully', $event);
       },
 
-      _broadcastShowPreviousBookPartially: function ($event) {
-        $scope.$broadcast('stack:showPreviousBookPartially', $event);
+      _broadcastShowPreviousItemPartially: function ($event) {
+        $scope.$broadcast('stack:showPreviousItemPartially', $event);
       },
 
-      _broadcastEndShowBookPartially: function ($event, distance) {
-        $scope.$broadcast('stack:endShowBookPartially', $event, distance);
+      _broadcastEndShowItemPartially: function ($event, distance) {
+        $scope.$broadcast('stack:endShowItemPartially', $event, distance);
       }
     };
 

@@ -1,47 +1,74 @@
 'use strict';
 
-var app = angular.module('app', ['ui.router', 'ngResource', 'ngTouch', 'hmTouchEvents', 'app.stack']);
+var app = angular.module('app', ['ui.router', 'ngResource', 'ngTouch', 'hmTouchEvents', 'app.stack', 'app.popup']);
 
 app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRouterProvider) {
   $stateProvider
     .state('home', {
-      url: '/home'
+      abstract: true,
+      url: '/home',
+      templateUrl: 'empty.html'
     })
     .state('home.now', {
       url: '/now',
-      title: 'Read now'
+      title: 'Read now',
+      resource: 'UserBookListReadNowResource',
+      templateUrl: 'stack.html',
+      type: 'book'
     })
     .state('home.want', {
       url: '/want',
-      title: 'Want to read'
+      title: 'Want to read',
+      resource: 'UserBookListReadWantResource',
+      templateUrl: 'stack.html',
+      type: 'book'
     })
     .state('home.all', {
       url: '/all',
-      title: 'All books'
+      title: 'All books',
+      resource: 'UserBookListAllResource',
+      templateUrl: 'stack.html',
+      type: 'book'
     })
     .state('home.quotes', {
       url: '/quotes',
-      title: 'Quotes'
+      title: 'Quotes',
+      resource: 'UserMarkersResource',
+      templateUrl: 'stack.html',
+      type: 'quote'
     })
 
     .state('catalog', {
-      url: '/catalog'
+      abstract: true,
+      url: '/catalog',
+      templateUrl: 'empty.html'
     })
     .state('catalog.all', {
       url: '/all',
-      title: 'Catalog'
+      title: 'Catalog',
+      resource: 'CatalogNewResource',
+      templateUrl: 'stack.html',
+      type: 'book'
     })
     .state('catalog.friends', {
       url: '/friends',
-      title: 'Friends'
+      title: 'Friends',
+      resource: 'CatalogFriendsResource',
+      templateUrl: 'stack.html',
+      type: ''
     })
     .state('catalog.popular', {
       url: '/popular',
-      title: 'Popular'
+      title: 'Popular',
+      resource: 'CatalogPopularResource',
+      templateUrl: 'stack.html',
+      type: 'book'
     })
     .state('catalog.shelves', {
       url: '/shelves',
-      title: 'Shelves'
+      title: 'Shelves',
+      templateUrl: 'stack.html',
+      type: 'shelf'
     });
 
   $urlRouterProvider
@@ -121,6 +148,8 @@ app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource'
   console.log('state:', $scope.app.$state);
 }]);
 
+app.popup = angular.module('app.popup', []);
+
 app.stack = angular.module('app.stack', []);
 
 var hmTouchEvents = angular.module('hmTouchEvents', []);
@@ -179,72 +208,194 @@ angular.forEach(hmGestures, function (name) {
   ]);
 });
 
-app.stack
-  .controller('StackCtrl', ['$rootScope', '$scope', '$state', 'UserBookListReadNowResource', function ($rootScope, $scope, $state, UserBookListReadNowResource) {
+app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
+  $scope.popup = {
+    active: false,
+
+    activate: function () {
+      this.active = true;
+      this._broadcastPopupActivated();
+    },
+
+    deactivate: function () {
+      this.active = false;
+      this._broadcastPopupDeactivated();
+    },
+
+    toggle: function () {
+      this.isActive() ? this.deactivate() : this.activate();
+    },
+
+    stop: function () {
+      console.log('stopped');
+    },
+
+    isActive: function () {
+      return this.active;
+    },
+
+    _broadcastPopupActivated: function () {
+      $scope.$broadcast('popup:activated');
+    },
+
+    _broadcastPopupDeactivated: function () {
+      $scope.$broadcast('popup:deactivated');
+    }
+  };
+}]);
+
+app.popup.directive('popup', function () {
+  return {
+    restrict: 'E',
+    controller: 'PopupCtrl',
+    link: function (scope, el, attrs) {
+      scope.popup.view = {
+        wrapperEl: document.getElementById('popup-wrapper'),
+        popupEl: el,
+        scaleVisibleState: true,
+
+        initialize: function () {
+          this.setEventListeners();
+        },
+
+        setEventListeners: function () {
+          scope.$on('popup:activated', this.showPopup.bind(this));
+          scope.$on('popup:deactivated', this.hidePopup.bind(this));
+        },
+
+        showPopup: function () {
+          if (this.scaleVisibleState) {
+            this.scalePopupToHiddenState(1);
+          }
+
+          Velocity(this.wrapperEl, {
+            opacity: 1
+          }, {
+            display: 'inline-block',
+            duration: 10,
+            complete: function () {
+              this.scalePopupToVisibleState();
+            }.bind(this)
+          });
+        },
+
+        hidePopup: function () {
+          Velocity(this.wrapperEl, {
+            opacity: 0
+          }, {
+            display: 'none',
+            duration: 100,
+            begin: function () {
+              this.scalePopupToHiddenState();
+            }.bind(this)
+          });
+        },
+
+        scalePopupToHiddenState: function (duration) {
+          Velocity(this.popupEl, {
+            scaleX: 0,
+            scaleY: 0
+          }, {
+            duration: duration || 300
+          });
+
+          this.scaleVisibleState = false;
+        },
+
+        scalePopupToVisibleState: function (duration) {
+          Velocity(this.popupEl, {
+            scaleX: 1,
+            scaleY: 1
+          }, {
+            duration: duration || 300
+          });
+
+          this.scaleVisibleState = true;
+        }
+      };
+
+      scope.popup.view.initialize();
+    }
+  };
+});
+
+app.stack.controller('StackCtrl', [
+  '$rootScope', '$scope', '$state', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource',
+  function ($rootScope, $scope, $state, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource) {
     $scope.stack = {
       distance: 0,
-      currentBook: null,
-      animatedBook: null,
-      firstBookShowed: true,
+      currentItem: null,
+      animatedItem: null,
+      firstItemShowed: true,
+
+      resources: {
+        'UserBookListReadNowResource': UserBookListReadNowResource,
+        'UserBookListReadWantResource': UserBookListReadWantResource,
+        'UserBookListAllResource': UserBookListAllResource,
+        'UserMarkersResource': UserMarkersResource,
+        'CatalogBestResource': CatalogBestResource,
+        'CatalogNewResource': CatalogNewResource,
+        'CatalogPopularResource': CatalogPopularResource,
+        'CatalogFriendsResource': CatalogFriendsResource
+      },
 
       initialize: function () {
         this.setEventListeners();
-        this.fetchUserBookListReadNow();
+        this.fetchUserItemList();
       },
 
       setEventListeners: function () {
-        $scope.$on('stack:nextBookShown', this.setDefaultStateAfterNextBookShown.bind(this));
-        $scope.$on('stack:previousBookShown', this.setDefaultStateAfterPreviousBookShown.bind(this));
+        $scope.$on('stack:nextItemShown', this.setDefaultStateAfterNextItemShown.bind(this));
+        $scope.$on('stack:previousItemShown', this.setDefaultStateAfterPreviousItemShown.bind(this));
 
-        $scope.$on('stack:nextBookHidden', this.setDefaultStateAfterNextBookHidden.bind(this));
-        $scope.$on('stack:previousBookHidden', this.setDefaultStateAfterPreviousBookHidden.bind(this));
+        $scope.$on('stack:nextItemHidden', this.setDefaultStateAfterNextItemHidden.bind(this));
+        $scope.$on('stack:previousItemHidden', this.setDefaultStateAfterPreviousItemHidden.bind(this));
       },
 
-      setUserBookListReadNow: function (res) {
-        this.userBookListReadNow = res;
+      setUserItemList: function (res) {
+        this.currentItemList = this._handleRes(res);
 
-        this.currentBookList = this.userBookListReadNow;
-        this.setCurrentBook();
-        this.setAnimatedBook(this.currentBook);
+        this.setCurrentItem();
+        this.setAnimatedItem(this.currentItem);
       },
 
-      setCurrentBook: function (book) {
-        this.currentBook = book || this.currentBookList[0];
-        this._setNextBook();
-        this._setPreviousBook();
+      setCurrentItem: function (item) {
+        this.currentItem = item || this.currentItemList[0];
+        this._setNextItem();
+        this._setPreviousItem();
       },
 
-      setAnimatedBook: function (book) {
-        this.animatedBook = book || this.currentBook;
+      setAnimatedItem: function (item) {
+        this.animatedItem = item || this.currentItem;
       },
 
-      _setNextBook: function () {
-        var nextIndex = this.currentBookList.indexOf(this.currentBook) + 1;
-        this.nextBook = nextIndex <= this.currentBookList.length - 1 ? this.currentBookList[nextIndex] : null;
+      _setNextItem: function () {
+        var nextIndex = this.currentItemList.indexOf(this.currentItem) + 1;
+        this.nextItem = nextIndex <= this.currentItemList.length - 1 ? this.currentItemList[nextIndex] : null;
       },
 
-      _setPreviousBook: function () {
-        var previousIndex = this.currentBookList.indexOf(this.currentBook) - 1;
-        this.previousBook = previousIndex >= 0 ? this.currentBookList[previousIndex] : null;
+      _setPreviousItem: function () {
+        var previousIndex = this.currentItemList.indexOf(this.currentItem) - 1;
+        this.previousItem = previousIndex >= 0 ? this.currentItemList[previousIndex] : null;
       },
 
-      setDefaultStateAfterNextBookShown: function () {
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterNextItemShown: function () {
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
-      setDefaultStateAfterNextBookHidden: function () {
-        this.setCurrentBook(this.animatedBook);
+      setDefaultStateAfterNextItemHidden: function () {
+        this.setCurrentItem(this.animatedItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
-      setDefaultStateAfterPreviousBookShown: function () {
-        this.setCurrentBook(this.animatedBook);
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterPreviousItemShown: function () {
+        this.setCurrentItem(this.animatedItem);
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
@@ -252,149 +403,186 @@ app.stack
         $scope.$apply();
       },
 
-      setDefaultStateAfterPreviousBookHidden: function () {
-        this.setAnimatedBook(this.currentBook);
+      setDefaultStateAfterPreviousItemHidden: function () {
+        this.setAnimatedItem(this.currentItem);
         this.cleanDistance();
 
         this._setDefaultValues();
       },
 
       _setDefaultValues: function () {
-        this.bookShowingPartially = false;
-        this.bookShowingFully = false;
-        this.firstBookShowed = false;
-        this.lastBookShowed = !this.nextBook;
-        this.firstBookShowed = !this.previousBook;
+        this.itemShowingPartially = false;
+        this.itemShowingFully = false;
+        this.firstItemShowed = false;
+        this.lastItemShowed = !this.nextItem;
+        this.firstItemShowed = !this.previousItem;
       },
 
-      fetchUserBookListReadNow: function () {
-        UserBookListReadNowResource
+      _handleRes: function (res) {
+        if (angular.isObject(res) && res.objects) {
+          res = res.objects;
+        }
+
+        angular.forEach(res, function (item) {
+          item.type = $state.$current.type || '';
+        }.bind(this));
+
+        if ($state.$current.resource === 'UserMarkersResource') {
+          var markersRes = [];
+
+          angular.forEach(res, function (markers) {
+            angular.forEach(markers[0], function (marker) {
+              marker.type = 'quote';
+              markersRes.push(marker);
+            })
+          }.bind(this));
+
+          res = markersRes;
+        }
+
+        if (res.length === 0 || res.length === 1) {
+          this.lastItemShowed = true;
+        }
+
+        return res;
+      },
+
+      fetchUserItemList: function () {
+        this.currentResource = this.resources[$state.$current.resource];
+
+        if (!this.currentResource) {
+          return;
+        }
+
+        this.currentResource
           .query().$promise
-          .then(this.setUserBookListReadNow.bind(this));
+          .then(this.setUserItemList.bind(this));
       },
 
-      getNextBookFully: function ($event) {
-        this.bookShowingFully = true;
-
-        if (!this.isBookShowingPartially()) {
-          if (!this.nextBook) {
+      getNextItemFully: function ($event) {
+        console.log('next fully');
+        if (!this.isItemShowingPartially()) {
+          if (!this.nextItem) {
             return;
           }
 
-          this.setCurrentBook(this.nextBook);
+          this.setCurrentItem(this.nextItem);
         }
 
-        this._broadcastShowNextBookFully($event);
+        this.itemShowingFully = true;
+
+        this._broadcastShowNextItemFully($event);
       },
 
-      getPreviousBookFully: function ($event) {
-        this.bookShowingFully = true;
-
-        if (!this.isBookShowingPartially()) {
-          if (!this.previousBook) {
+      getPreviousItemFully: function ($event) {
+        if (!this.isItemShowingPartially()) {
+          if (!this.previousItem) {
             return;
           }
 
-          this.setAnimatedBook(this.previousBook);
+          this.setAnimatedItem(this.previousItem);
         }
 
-        this._broadcastShowPreviousBookFully($event);
+        this.itemShowingFully = true;
+
+        this._broadcastShowPreviousItemFully($event);
       },
 
-      getBookPartially: function ($event) {
-        if (this.isBookShowingFully()) {
+      getItemPartially: function ($event) {
+        if (this.isItemShowingFully()) {
           this.cleanDistance();
           return;
         }
 
-        this.distance = this.distance ? this.distance + $event.deltaX : $event.deltaX;
+        this.previousDistance = this.distance || 0;
+        this.distance = $event.deltaX;
+
+        if (this.previousDistance < 0 && this.distance > 0) {
+          this.distance = -1;
+        }
 
         if (this.distance < 0) {
-          this.getNextBookPartially($event);
+          this.getNextItemPartially($event);
         } else if (this.distance > 0) {
-          this.getPreviousBookPartially($event);
+          this.getPreviousItemPartially($event);
         }
       },
 
-      getNextBookPartially: function ($event) {
-        if (!this.nextBook && this.isLastBookShowed()) {
+      getNextItemPartially: function ($event) {
+        if (!this.nextItem && this.isLastItemShowed()) {
           this.cleanDistance();
           return;
         }
 
-        if (!this.isBookShowingPartially()) {
-          this.bookShowingPartially = true;
-          this.setCurrentBook(this.nextBook);
+        if (!this.isItemShowingPartially()) {
+          this.itemShowingPartially = true;
+          this.setCurrentItem(this.nextItem);
         }
 
-        this._broadcastShowNextBookPartially($event);
-        console.log('getNextBookPartially');
+        this._broadcastShowNextItemPartially($event);
       },
 
-      getPreviousBookPartially: function ($event) {
-        console.log('1', !this.previousBook);
-        console.log('2', this.isFirstBookShowed());
-
-        if (!this.previousBook && this.isFirstBookShowed()) {
+      getPreviousItemPartially: function ($event) {
+        if (!this.previousItem && this.isFirstItemShowed()) {
           this.cleanDistance();
           return;
         }
-        console.log('getPreviousBookPartially');
-        if (!this.isBookShowingPartially()) {
-          this.bookShowingPartially = true;
-          this.setAnimatedBook(this.previousBook);
+
+        if (!this.isItemShowingPartially()) {
+          this.itemShowingPartially = true;
+          this.setAnimatedItem(this.previousItem);
         }
 
-        this._broadcastShowPreviousBookPartially($event);
+        this._broadcastShowPreviousItemPartially($event);
 
       },
 
-      endGetBookPartially: function ($event) {
-        if (!this.isBookShowingPartially()) {
+      endGetItemPartially: function ($event) {
+        if (!this.isItemShowingPartially()) {
           return;
         }
 
-        this._broadcastEndShowBookPartially($event, this.distance);
+        this._broadcastEndShowItemPartially($event, this.distance);
       },
 
       cleanDistance: function () {
         this.distance = 0;
       },
 
-      isBookShowingFully: function () {
-        return this.bookShowingFully;
+      isItemShowingFully: function () {
+        return this.itemShowingFully;
       },
 
-      isLastBookShowed: function () {
-        return this.lastBookShowed;
+      isLastItemShowed: function () {
+        return this.lastItemShowed;
       },
 
-      isFirstBookShowed: function () {
-        return this.firstBookShowed;
+      isFirstItemShowed: function () {
+        return this.firstItemShowed;
       },
 
-      isBookShowingPartially: function () {
-        return this.bookShowingPartially;
+      isItemShowingPartially: function () {
+        return this.itemShowingPartially;
       },
 
-      _broadcastShowNextBookFully: function ($event) {
-        $scope.$broadcast('stack:showNextBookFully', $event);
+      _broadcastShowNextItemFully: function ($event) {
+        $scope.$broadcast('stack:showNextItemFully', $event);
       },
 
-      _broadcastShowNextBookPartially: function ($event) {
-        $scope.$broadcast('stack:showNextBookPartially', $event);
+      _broadcastShowNextItemPartially: function ($event) {
+        $scope.$broadcast('stack:showNextItemPartially', $event);
       },
 
-      _broadcastShowPreviousBookFully: function ($event) {
-        $scope.$broadcast('stack:showPreviousBookFully', $event);
+      _broadcastShowPreviousItemFully: function ($event) {
+        $scope.$broadcast('stack:showPreviousItemFully', $event);
       },
 
-      _broadcastShowPreviousBookPartially: function ($event) {
-        $scope.$broadcast('stack:showPreviousBookPartially', $event);
+      _broadcastShowPreviousItemPartially: function ($event) {
+        $scope.$broadcast('stack:showPreviousItemPartially', $event);
       },
 
-      _broadcastEndShowBookPartially: function ($event, distance) {
-        $scope.$broadcast('stack:endShowBookPartially', $event, distance);
+      _broadcastEndShowItemPartially: function ($event, distance) {
+        $scope.$broadcast('stack:endShowItemPartially', $event, distance);
       }
     };
 
@@ -408,20 +596,20 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
     link: function (scope, el, attrs) {
       scope.stack.view = {
         elWidth: 308,
-        defaultDuration: 500,
+        defaultDuration: 150,
 
         initialize: function () {
           this.setEventListeners();
         },
 
         setEventListeners: function () {
-          scope.$on('stack:showNextBookFully', this.showNextBookCardFully.bind(this));
-          scope.$on('stack:showNextBookPartially', this.showNextBookCardPartially.bind(this));
+          scope.$on('stack:showNextItemFully', this.showNextItemCardFully.bind(this));
+          scope.$on('stack:showNextItemPartially', this.showNextItemCardPartially.bind(this));
 
-          scope.$on('stack:showPreviousBookFully', this.showPreviousBookCardFully.bind(this));
-          scope.$on('stack:showPreviousBookPartially', this.showPreviousBookCardPartially.bind(this));
+          scope.$on('stack:showPreviousItemFully', this.showPreviousItemCardFully.bind(this));
+          scope.$on('stack:showPreviousItemPartially', this.showPreviousItemCardPartially.bind(this));
 
-          scope.$on('stack:endShowBookPartially', this.endShowBookCardPartially.bind(this));
+          scope.$on('stack:endShowItemPartially', this.endShowItemCardPartially.bind(this));
         },
 
         getWindowWidth: function () {
@@ -433,236 +621,234 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         },
 
         getCurrentLeftValue: function () {
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          return this.isShowingPartially() ? parseInt(animatedBookCard.el.style.left) : animatedBookCard.defaultLeftValue;
+          return this.isShowingPartially() ? parseInt(animatedItemCard.el.style.left) : animatedItemCard.defaultLeftValue;
         },
 
         getCurrentLeftDifferenceValue: function () {
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          return Math.abs(Math.abs(animatedBookCard.defaultLeftValue) - Math.abs(this.getCurrentLeftValue()));
+          return Math.abs(Math.abs(animatedItemCard.defaultLeftValue) - Math.abs(this.getCurrentLeftValue()));
         },
 
-        getAnimatedBookCard: function () {
-          if (!this.animatedBookCard) {
-            this.animatedBookCard = {};
-            this.animatedBookCard.el = document.getElementById('animated-book-card');
-            this.animatedBookCard.defaultLeft = $window.getComputedStyle(this.animatedBookCard.el).left;
-            this.animatedBookCard.defaultLeftValue = this.animatedBookCard.defaultLeft.indexOf('%') ? this.getWindowWidth() * parseInt(this.animatedBookCard.defaultLeft) / 100 : parseInt(this.animatedBookCard.defaultLeft);
-            this.animatedBookCard.endLeft = -1 * this.getWindowWidth() + this.animatedBookCard.defaultLeftValue + 'px';
-            this.animatedBookCard.endLeftValue = parseInt(this.animatedBookCard.endLeft);
-            this.animatedBookCard.width = this.elWidth;
+        getAnimatedItemCard: function () {
+          if (!this.animatedItemCard) {
+            this.animatedItemCard = {};
+            this.animatedItemCard.el = document.getElementById('animated-item-card');
+            this.animatedItemCard.defaultLeft = $window.getComputedStyle(this.animatedItemCard.el).left;
+            this.animatedItemCard.defaultLeftValue = this.animatedItemCard.defaultLeft.indexOf('%') ? this.getWindowWidth() * parseInt(this.animatedItemCard.defaultLeft) / 100 : parseInt(this.animatedItemCard.defaultLeft);
+            this.animatedItemCard.endLeft = -1 * this.getWindowWidth() + this.animatedItemCard.defaultLeftValue + 'px';
+            this.animatedItemCard.endLeftValue = parseInt(this.animatedItemCard.endLeft);
+            this.animatedItemCard.width = this.elWidth;
           }
 
-          return this.animatedBookCard;
+          return this.animatedItemCard;
         },
 
-        activateAnimatedBookCard: function () {
+        activateAnimatedItemCard: function () {
           if (this.active) {
             return;
           }
 
           this.active = true;
-          this.getAnimatedBookCard().el.style.display = 'inline-block';
+          this.getAnimatedItemCard().el.style.display = 'inline-block';
         },
 
-        deactivateAnimatedBookCard: function () {
+        deactivateAnimatedItemCard: function () {
           if (!this.active) {
             return;
           }
 
           this.active = false;
-          this.getAnimatedBookCard().el.style.display = 'none';
+          this.getAnimatedItemCard().el.style.display = 'none';
         },
 
-        setAnimatedBookCardToDefaultState: function () {
-          this.deactivateAnimatedBookCard();
-          this.getAnimatedBookCard().el.style.left = '';
+        setAnimatedItemCardToDefaultState: function () {
+          this.deactivateAnimatedItemCard();
+          this.getAnimatedItemCard().el.style.left = '';
         },
 
-        setAnimatedBookCardToEndState: function () {
-          this.getAnimatedBookCard().el.style.left = this.getAnimatedBookCard().endLeft;
-          this.activateAnimatedBookCard();
+        setAnimatedItemCardToEndState: function () {
+          this.getAnimatedItemCard().el.style.left = this.getAnimatedItemCard().endLeft;
+          this.activateAnimatedItemCard();
         },
 
-        showNextBookCardFully: function (e, $event) {
-          console.log('showNextBookCardFully');
-          this.activateAnimatedBookCard();
+        showNextItemCardFully: function (e, $event) {
+          this.activateAnimatedItemCard();
 
-          this.bookCardShowingFully = true;
+          this.itemCardShowingFully = true;
 
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedBookCard.el, 'stop');
-          Velocity(animatedBookCard.el, {
-            left: animatedBookCard.endLeft
+          //Velocity(animatedItemCard.el, 'stop');
+          Velocity(animatedItemCard.el, {
+            left: animatedItemCard.endLeft
           }, {
             display: 'inline-block',
-            duration: 200,
+            duration: this.defaultDuration,
             promise: true,
             complete: function () {
-              this._broadcastNextBookShown();
-              this.setAnimatedBookCardToDefaultState();
-              this.bookCardShowingFully = false;
+              this._broadcastNextItemShown();
+              this.setAnimatedItemCardToDefaultState();
+              this.itemCardShowingFully = false;
             }.bind(this)
           });
 
-          this.bookCardShowingPartially = false;
+          this.itemCardShowingPartially = false;
         },
 
-        showNextBookCardPartially: function (e, $event) {
+        showNextItemCardPartially: function (e, $event) {
           if (this.isShowingFully()) {
             return;
           }
 
-          this.activateAnimatedBookCard();
-          this.bookCardShowingPartially = true;
+          this.activateAnimatedItemCard();
+          this.itemCardShowingPartially = true;
 
-          var animatedBookCard = this.getAnimatedBookCard();
-          var distance = Math.min(animatedBookCard.defaultLeftValue + $event.deltaX, animatedBookCard.defaultLeftValue);
+          var animatedItemCard = this.getAnimatedItemCard();
+          var distance = Math.min(animatedItemCard.defaultLeftValue + $event.deltaX, animatedItemCard.defaultLeftValue);
 
-          Velocity(animatedBookCard.el, {
+          Velocity(animatedItemCard.el, {
             left: distance
           }, {
             display: 'inline-block',
-            duration: 0,
+            duration: 1,
             promise: true
           });
         },
 
-        hideNextBookCardFully: function (e, $event) {
+        hideNextItemCardFully: function (e, $event) {
           if (!this.isShowingPartially()) {
             return;
           }
 
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedBookCard.el, 'stop');
-          Velocity(animatedBookCard.el, {
-            left: animatedBookCard.defaultLeftValue
+          //Velocity(animatedItemCard.el, 'stop');
+          Velocity(animatedItemCard.el, {
+            left: animatedItemCard.defaultLeftValue
           }, {
             display: 'inline-block',
-            duration: 200,
+            duration: this.defaultDuration,
             promise: true,
             complete: function () {
-              this.bookCardShowingPartially = false;
-              this._broadcastNextBookHidden();
+              this.itemCardShowingPartially = false;
+              this._broadcastNextItemHidden();
             }.bind(this)
           });
         },
 
-        showPreviousBookCardFully: function (e, $event) {
-          console.log('showPreviousBookCardFully');
+        showPreviousItemCardFully: function (e, $event) {
           if (!this.isShowingPartially()) {
-            this.setAnimatedBookCardToEndState();
+            this.setAnimatedItemCardToEndState();
           }
 
-          this.bookCardShowingFully = true;
+          this.itemCardShowingFully = true;
 
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedBookCard.el, 'stop');
-          Velocity(animatedBookCard.el, {
-            left: animatedBookCard.defaultLeft
+          //Velocity(animatedItemCard.el, 'stop');
+          Velocity(animatedItemCard.el, {
+            left: animatedItemCard.defaultLeft
           }, {
             display: 'inline-block',
-            duration: 200,
+            duration: this.defaultDuration,
             promise: true,
             complete: function () {
-              this._broadcastPreviousBookShown();
-              this.setAnimatedBookCardToDefaultState();
-              this.bookCardShowingFully = false;
+              this._broadcastPreviousItemShown();
+              this.setAnimatedItemCardToDefaultState();
+              this.itemCardShowingFully = false;
             }.bind(this)
           });
 
-          this.bookCardShowingPartially = false;
+          this.itemCardShowingPartially = false;
         },
 
-        showPreviousBookCardPartially: function (e, $event) {
-          console.log('showPreviousBookCardPartially');
+        showPreviousItemCardPartially: function (e, $event) {
           if (this.isShowingFully()) {
             return;
           }
 
           if (!this.isShowingPartially()) {
-            this.setAnimatedBookCardToEndState();
+            this.setAnimatedItemCardToEndState();
           }
 
-          this.bookCardShowingPartially = true;
+          this.itemCardShowingPartially = true;
 
-          var animatedBookCard = this.getAnimatedBookCard();
-          var distance = Math.max(animatedBookCard.endLeftValue + $event.deltaX, animatedBookCard.endLeftValue);
+          var animatedItemCard = this.getAnimatedItemCard();
+          var distance = Math.max(animatedItemCard.endLeftValue + $event.deltaX, animatedItemCard.endLeftValue);
 
-          Velocity(animatedBookCard.el, {
+          Velocity(animatedItemCard.el, {
             left: distance
           }, {
             display: 'inline-block',
-            duration: 0,
+            duration: 1,
             promise: true
           });
         },
 
-        hidePreviousBookCardFully: function (e, $event) {
+        hidePreviousItemCardFully: function (e, $event) {
           if (!this.isShowingPartially()) {
             return;
           }
 
-          var animatedBookCard = this.getAnimatedBookCard();
+          var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedBookCard.el, 'stop');
-          Velocity(animatedBookCard.el, {
-            left: animatedBookCard.endLeftValue
+          //Velocity(animatedItemCard.el, 'stop');
+          Velocity(animatedItemCard.el, {
+            left: animatedItemCard.endLeftValue
           }, {
             display: 'inline-block',
-            duration: 200,
+            duration: this.defaultDuration,
             promise: true,
             complete: function () {
-              this.bookCardShowingPartially = false;
-              this.setAnimatedBookCardToDefaultState();
-              this._broadcastPreviousBookHidden();
+              this.itemCardShowingPartially = false;
+              this.setAnimatedItemCardToDefaultState();
+              this._broadcastPreviousItemHidden();
             }.bind(this)
           });
-          console.log('hidePreviousBookCardFully');
         },
 
-        endShowBookCardPartially: function (e, $event, distance) {
+        endShowItemCardPartially: function (e, $event, distance) {
           if (this.isShowingFully()) {
             return;
           }
 
-          var diff = this.getCurrentLeftDifferenceValue();
+          //var diff = this.getCurrentLeftDifferenceValue();
+          var absDistance = Math.abs(distance);
           var minDistance = this.getWindowWidth() / 3.0;
 
-          if (distance < 0 ? (diff < minDistance) : (diff > minDistance)) {
-            distance < 0 ? this.hideNextBookCardFully() : this.hidePreviousBookCardFully();
+          //if (distance < 0 ? (absDistance < minDistance) : (absDistance > minDistance)) {
+          if (absDistance < minDistance) {
+            distance < 0 ? this.hideNextItemCardFully() : this.hidePreviousItemCardFully();
           } else {
-            distance < 0 ? this.showNextBookCardFully() : this.showPreviousBookCardFully();
+            distance < 0 ? this.showNextItemCardFully() : this.showPreviousItemCardFully();
           }
         },
 
         isShowingFully: function () {
-          return this.bookCardShowingFully;
+          return this.itemCardShowingFully;
         },
 
         isShowingPartially: function () {
-          return this.bookCardShowingPartially;
+          return this.itemCardShowingPartially;
         },
 
-        _broadcastNextBookShown: function () {
-          scope.$broadcast('stack:nextBookShown');
+        _broadcastNextItemShown: function () {
+          scope.$broadcast('stack:nextItemShown');
         },
 
-        _broadcastPreviousBookShown: function () {
-          scope.$broadcast('stack:previousBookShown');
+        _broadcastPreviousItemShown: function () {
+          scope.$broadcast('stack:previousItemShown');
         },
 
-        _broadcastNextBookHidden: function () {
-          scope.$broadcast('stack:nextBookHidden');
+        _broadcastNextItemHidden: function () {
+          scope.$broadcast('stack:nextItemHidden');
         },
 
-        _broadcastPreviousBookHidden: function () {
-          scope.$broadcast('stack:previousBookHidden');
+        _broadcastPreviousItemHidden: function () {
+          scope.$broadcast('stack:previousItemHidden');
         }
       };
 
@@ -673,7 +859,9 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
 app.stack
   .factory('BookListsResource', ['$resource', function ($resource) {
-    return $resource(CONFIG.api.href + '/a/4/lists.json', {'auth_token': CONFIG.api.token});
+    return $resource(CONFIG.api.href + '/a/4/lists.json', {
+      'auth_token': CONFIG.api.token
+    });
   }])
 
   .factory('UserBookListReadNowResource', ['$resource', function ($resource) {
@@ -686,4 +874,32 @@ app.stack
 
   .factory('UserBookListAllResource', ['$resource', function ($resource) {
     return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/d/all.json');
+  }])
+
+  .factory('UserMarkersResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/m/grouped.json');
+  }])
+
+  .factory('CatalogBestResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/lists/fJb1wiBI.json', null, {
+      'query': { method: 'GET', isArray: false }
+    })
+  }])
+
+  .factory('CatalogNewResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/lists/UXt1r5P3.json', null, {
+      'query': { method: 'GET', isArray: false }
+    })
+  }])
+
+  .factory('CatalogPopularResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/d/popular.json', null, {
+      'query': { method: 'GET', isArray: false }
+    })
+  }])
+
+  .factory('CatalogFriendsResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/a/subscribed.json', {
+      'auth_token': CONFIG.api.token
+    })
   }]);
