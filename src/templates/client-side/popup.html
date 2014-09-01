@@ -1,0 +1,43 @@
+<div class="s-popup-inner">
+    <div class="s-messages-notifications-toggle">
+        <span class="s-popup-toggle-button notification" ng-click="notifications.activate()">Notifications</span>
+        <span class="s-separator">&#183;</span>
+        <span class="s-popup-toggle-button message" ng-click="messages.activate()">Messages</span>
+    </div>
+
+    <div class="s-search-input-wrapper">
+        <input id="search-input" placeholder="Search text" class="s-input" type="text" ng-click="search.view.focus()">
+    </div>
+
+    <notifications class="s-notifications">
+        <ul class="s-popup-items">
+            <li class="s-popup-item" ng-repeat="notification in notifications.list">
+                <div class="s-item-image">
+                    <img class="s-img" ng-src="{{ notification.user.photo }}">
+                </div>
+                <div class="s-item-info">
+                    <span class="s-time" ng-bind="notification.time"></span>
+                    <span class="s-user-name" ng-bind="notification.user.name"></span>
+                    <span class="s-text" ng-bind="notification.text"></span>
+                </div>
+            </li>
+        </ul>
+    </notifications>
+
+    <messages class="s-messages">
+        <ul class="s-popup-items">
+            <li class="s-popup-item" ng-repeat="message in messages.list">
+                <div class="s-item-image">
+                    <img class="s-img" ng-src="{{ message.user.photo }}">
+                </div>
+                <div class="s-item-info">
+                    <span class="s-time" ng-bind="message.time"></span>
+                    <span class="s-user-name" ng-bind="message.user.name"></span>
+                    <span class="s-text" ng-bind="message.text"></span>
+                </div>
+            </li>
+        </ul>
+    </messages>
+
+    <search class="s-search"></search>
+</div>

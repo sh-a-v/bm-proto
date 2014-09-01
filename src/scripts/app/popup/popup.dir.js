@@ -1,7 +1,8 @@
-app.popup.directive('popup', function () {
+app.popup.directive('popup', ['$window', function ($window) {
   return {
     restrict: 'E',
     controller: 'PopupCtrl',
+    templateUrl: 'popup.html',
     link: function (scope, el, attrs) {
       scope.popup.view = {
         wrapperEl: document.getElementById('popup-wrapper'),
@@ -17,6 +18,22 @@ app.popup.directive('popup', function () {
           scope.$on('popup:deactivated', this.hidePopup.bind(this));
         },
 
+        getWindowWidth: function () {
+          if (!this.windowWidth) {
+            this.windowWidth = $window.innerWidth;
+          }
+
+          return this.windowWidth;
+        },
+
+        getWindowHeight: function () {
+          if (!this.windowHeight) {
+            this.windowHeight = $window.innerHeight;
+          }
+
+          return this.windowHeight;
+        },
+
         showPopup: function () {
           if (this.scaleVisibleState) {
             this.scalePopupToHiddenState(1);
@@ -26,7 +43,7 @@ app.popup.directive('popup', function () {
             opacity: 1
           }, {
             display: 'inline-block',
-            duration: 10,
+            duration: 1,
             complete: function () {
               this.scalePopupToVisibleState();
             }.bind(this)
@@ -47,10 +64,9 @@ app.popup.directive('popup', function () {
 
         scalePopupToHiddenState: function (duration) {
           Velocity(this.popupEl, {
-            scaleX: 0,
-            scaleY: 0
+            height: '10%'
           }, {
-            duration: duration || 300
+            duration: duration || 200
           });
 
           this.scaleVisibleState = false;
@@ -58,10 +74,9 @@ app.popup.directive('popup', function () {
 
         scalePopupToVisibleState: function (duration) {
           Velocity(this.popupEl, {
-            scaleX: 1,
-            scaleY: 1
+            height: '100%'
           }, {
-            duration: duration || 300
+            duration: duration || 200
           });
 
           this.scaleVisibleState = true;
@@ -71,4 +86,4 @@ app.popup.directive('popup', function () {
       scope.popup.view.initialize();
     }
   };
-});
+}]);

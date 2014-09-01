@@ -12,20 +12,26 @@
 
         <div class="s-big-item-card">
             <div class="s-big-item-card-inner book" ng-if="stack.currentItem.type === 'book'">
+                <div class="menu"><i class="s-icon s-icon-menu"></i></div>
+                <div class="share"><i class="s-icon s-icon-share"></i></div>
                 <div class="cover">
                     <img class="s-img" ng-if="stack.currentItem.cover" ng-src="{{ stack.currentItem.cover.url }}">
                     <div class="s-blank" ng-if="!stack.currentItem.cover">
                         <span class="s-blank-title" ng-bind="stack.currentItem.title"></span>
                         <span class="s-blank-authors" ng-bind="stack.currentItem.authors"></span>
                     </div>
+                    <div class="read"><i class="s-icon s-icon-read"></i></div>
                 </div>
-                <div class="title" ng-bind="stack.currentItem.title"></div>
-                <div class="authors" ng-bind="stack.currentItem.authors"></div>
+                <div class="title-authors-wrapper">
+                    <div class="title" ng-bind="stack.currentItem.title"></div>
+                    <div class="authors" ng-bind="stack.currentItem.authors"></div>
+                </div>
                 <div class="progress-wrapper">
                     <div class="s-progress-value">12%</div>
                     <div class="s-full-progress"></div>
                     <div class="s-active-progress"></div>
                 </div>
+                <div class="information">Bla bla bla, bla bla</div>
             </div>
 
             <div class="s-big-item-card-inner quote"></div>
@@ -34,20 +40,26 @@
 
         <div id="animated-item-card" class="s-animated-big-item-card">
             <div class="s-big-item-card-inner book" ng-if="stack.currentItem.type === 'book'">
+                <div class="menu"><i class="s-icon s-icon-menu"></i></div>
+                <div class="share"><i class="s-icon s-icon-share"></i></div>
                 <div class="cover">
                     <img class="s-img" ng-if="stack.animatedItem.cover" ng-src="{{ stack.animatedItem.cover.url }}">
                     <div class="s-blank" ng-if="!stack.animatedItem.cover">
                         <span class="s-blank-title" ng-bind="stack.animatedItem.title"></span>
                         <span class="s-blank-authors" ng-bind="stack.animatedItem.authors"></span>
                     </div>
+                    <div class="read"><i class="s-icon s-icon-read"></i></div>
                 </div>
-                <div class="title" ng-bind="stack.animatedItem.title"></div>
-                <div class="authors" ng-bind="stack.animatedItem.authors"></div>
+                <div class="title-authors-wrapper">
+                    <div class="title" ng-bind="stack.animatedItem.title"></div>
+                    <div class="authors" ng-bind="stack.animatedItem.authors"></div>
+                </div>
                 <div class="progress-wrapper">
                     <div class="s-progress-value">12%</div>
                     <div class="s-full-progress"></div>
                     <div class="s-active-progress"></div>
                 </div>
+                <div class="information">Bla bla bla, bla bla</div>
             </div>
 
             <div class="s-big-item-card-inner quote"></div>

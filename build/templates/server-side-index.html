@@ -12,8 +12,8 @@
         <header class="s-header">
             <span ng-bind="app.getCurrentTitle()"></span>
             <div class="s-header-buttons">
-                <button class="s-button-icon" ng-click="popup.activate()"><i class="s-icon s-icon-search"></i></button>
-                <button class="s-button-icon" ng-click="popup.activate()"><i class="s-icon s-icon-comment"></i></button>
+                <button class="s-button-icon" ng-click="search.activate($event)"><i class="s-icon s-icon-search"></i></button>
+                <button class="s-button-icon" ng-click="messages.activate($event)"><i class="s-icon s-icon-comment"></i></button>
             </div>
         </header>
 
@@ -42,8 +42,8 @@
             </div>
         </footer>
 
-        <div id="popup-wrapper" class="s-popup-wrapper" ng-click="popup.deactivate()">
-            <popup id="popup" class="s-popup" ng-click="$event.stopPropagation()"></popup>
+        <div id="popup-wrapper" class="s-popup-wrapper" >
+            <popup id="popup" class="s-popup"  ng-class="{message: messages.isActive(), notification: notifications.isActive(), search: search.isActive()}"></popup>
         </div>
 
     </main>

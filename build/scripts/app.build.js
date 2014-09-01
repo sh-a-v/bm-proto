@@ -148,9 +148,15 @@ app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource'
   console.log('state:', $scope.app.$state);
 }]);
 
-app.popup = angular.module('app.popup', []);
+app.popup = angular.module('app.popup', ['app.popup.messages', 'app.popup.notifications', 'app.popup.search']);
 
 app.stack = angular.module('app.stack', []);
+
+app.popup.messages = angular.module('app.popup.messages', []);
+
+app.popup.notifications = angular.module('app.popup.notifications', []);
+
+app.popup.search = angular.module('app.popup.search', []);
 
 var hmTouchEvents = angular.module('hmTouchEvents', []);
 
@@ -212,7 +218,21 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
   $scope.popup = {
     active: false,
 
+    initialize: function () {
+      this.setEventListeners();
+    },
+
+    setEventListeners: function () {
+      $scope.$on('messages:activated', this.activate.bind(this));
+      $scope.$on('notifications:activated', this.activate.bind(this));
+      $scope.$on('search:activated', this.activate.bind(this));
+    },
+
     activate: function () {
+      if (this.isActive()) {
+        return;
+      }
+
       this.active = true;
       this._broadcastPopupActivated();
     },
@@ -224,10 +244,6 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
 
     toggle: function () {
       this.isActive() ? this.deactivate() : this.activate();
-    },
-
-    stop: function () {
-      console.log('stopped');
     },
 
     isActive: function () {
@@ -242,12 +258,15 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
       $scope.$broadcast('popup:deactivated');
     }
   };
+
+  $scope.popup.initialize();
 }]);
 
-app.popup.directive('popup', function () {
+app.popup.directive('popup', ['$window', function ($window) {
   return {
     restrict: 'E',
     controller: 'PopupCtrl',
+    templateUrl: 'popup.html',
     link: function (scope, el, attrs) {
       scope.popup.view = {
         wrapperEl: document.getElementById('popup-wrapper'),
@@ -263,6 +282,22 @@ app.popup.directive('popup', function () {
           scope.$on('popup:deactivated', this.hidePopup.bind(this));
         },
 
+        getWindowWidth: function () {
+          if (!this.windowWidth) {
+            this.windowWidth = $window.innerWidth;
+          }
+
+          return this.windowWidth;
+        },
+
+        getWindowHeight: function () {
+          if (!this.windowHeight) {
+            this.windowHeight = $window.innerHeight;
+          }
+
+          return this.windowHeight;
+        },
+
         showPopup: function () {
           if (this.scaleVisibleState) {
             this.scalePopupToHiddenState(1);
@@ -272,7 +307,7 @@ app.popup.directive('popup', function () {
             opacity: 1
           }, {
             display: 'inline-block',
-            duration: 10,
+            duration: 1,
             complete: function () {
               this.scalePopupToVisibleState();
             }.bind(this)
@@ -293,10 +328,9 @@ app.popup.directive('popup', function () {
 
         scalePopupToHiddenState: function (duration) {
           Velocity(this.popupEl, {
-            scaleX: 0,
-            scaleY: 0
+            height: '10%'
           }, {
-            duration: duration || 300
+            duration: duration || 200
           });
 
           this.scaleVisibleState = false;
@@ -304,10 +338,9 @@ app.popup.directive('popup', function () {
 
         scalePopupToVisibleState: function (duration) {
           Velocity(this.popupEl, {
-            scaleX: 1,
-            scaleY: 1
+            height: '100%'
           }, {
-            duration: duration || 300
+            duration: duration || 200
           });
 
           this.scaleVisibleState = true;
@@ -317,7 +350,7 @@ app.popup.directive('popup', function () {
       scope.popup.view.initialize();
     }
   };
-});
+}]);
 
 app.stack.controller('StackCtrl', [
   '$rootScope', '$scope', '$state', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource',
@@ -903,3 +936,192 @@ app.stack
       'auth_token': CONFIG.api.token
     })
   }]);
+
+app.popup.messages.controller('MessagesCtrl', ['$scope', function ($scope) {
+  $scope.messages = {
+    active: false,
+
+    list: [{
+      user: {
+        photo: '/src/images/photo1.png',
+        name: 'Alex Gusev'
+      },
+      time: '19:33',
+      text: 'у нас в тльятти это слово немного по-другому произносят'
+    }, {
+      user: {
+        photo: '/src/images/photo2.png',
+        name: 'NYtimes'
+      },
+      time: 'yesterday',
+      text: 'Highly recommend this book for you'
+    }],
+
+    initialize: function () {
+      this.setEventListeners();
+    },
+
+    setEventListeners: function () {
+      $scope.$on('popup:deactivated', this.deactivate.bind(this));
+      $scope.$on('notifications:activated', this.deactivate.bind(this));
+    },
+
+    activate: function () {
+      if (this.isActive()) {
+        return;
+      }
+
+      this.active = true;
+      this._broadcastMessagesActivated();
+    },
+
+    deactivate: function () {
+      this.active = false;
+    },
+
+    isActive: function () {
+      return this.active;
+    },
+
+    _broadcastMessagesActivated: function () {
+      $scope.$broadcast('messages:activated');
+    }
+  };
+
+  $scope.messages.initialize();
+}]);
+
+app.popup.messages.directive('messages', function () {
+  return {
+    restrict: 'E',
+    controller: 'MessagesCtrl',
+    link: function (scope, el, attrs) {
+      scope.messages.view = {
+
+      };
+
+
+    }
+  };
+});
+
+app.popup.notifications.controller('NotificationsCtrl', ['$scope', function ($scope) {
+  $scope.notifications = {
+    active: false,
+
+    list: [{
+      user: {
+        photo: '/src/images/photo1.png',
+        name: 'Alex Gusev'
+      },
+      time: '19:33',
+      text: 'понравилась ваша цитата'
+    }, {
+      user: {
+        photo: '/src/images/photo2.png',
+        name: 'NYtimes'
+      },
+      time: 'yesterday',
+      text: 'Добавил вашу книгу из полки'
+    }],
+
+    initialize: function () {
+      this.setEventListeners();
+    },
+
+    setEventListeners: function () {
+      $scope.$on('popup:deactivated', this.deactivate.bind(this));
+      $scope.$on('messages:activated', this.deactivate.bind(this));
+    },
+
+    activate: function () {
+      if (this.isActive()) {
+        return;
+      }
+
+      this.active = true;
+      this._broadcastMessagesActivated();
+    },
+
+    deactivate: function () {
+      this.active = false;
+    },
+
+    isActive: function () {
+      return this.active;
+    },
+
+    _broadcastMessagesActivated: function () {
+      $scope.$broadcast('notifications:activated');
+    }
+  };
+
+  $scope.notifications.initialize();
+}]);
+
+app.popup.notifications.directive('notifications', function () {
+  return {
+    restrict: 'E',
+    controller: 'NotificationsCtrl',
+    link: function (scope, el, attrs) {
+      scope.notifications.view = {
+
+      };
+
+    }
+  };
+});
+
+app.popup.search.controller('SearchCtrl', ['$scope', function ($scope) {
+  $scope.search = {
+    active: false,
+
+    initialize: function () {
+      this.setEventListeners();
+    },
+
+    setEventListeners: function () {
+      $scope.$on('popup:deactivated', this.deactivate.bind(this));
+    },
+
+    activate: function () {
+      if (this.isActive()) {
+        return;
+      }
+
+      this.active = true;
+      this._broadcastMessagesActivated();
+    },
+
+    deactivate: function () {
+      this.active = false;
+    },
+
+    isActive: function () {
+      return this.active;
+    },
+
+    _broadcastMessagesActivated: function () {
+      $scope.$broadcast('search:activated');
+    }
+  };
+
+  $scope.search.initialize();
+}]);
+
+app.popup.search.directive('search', function () {
+  return {
+    restrict: 'E',
+    controller: 'SearchCtrl',
+    link: function (scope, el, attrs) {
+      scope.search.view = {
+        inputEl: document.getElementById('search-input'),
+
+        focus: function () {
+          this.inputEl.focus();
+        }
+      };
+
+    }
+  };
+});

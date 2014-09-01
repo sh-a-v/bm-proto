@@ -7,19 +7,208 @@
   display none
   width 100%
   height 100%
-  padding header-height 0 footer-height 0
+  padding header-height 5px footer-height 5px
   box-sizing border-box
 
   background rgba(0,0,0,0.5)
-  text-align center
+  text-align right
 
 .s-popup
   position relative
+  top 0
+  right 0
 
   display inline-block
-  width 97%
+  width 100%
   height 100%
   box-sizing border-box
   border-radius 2px
 
   background #ffffff
+  text-align center
+
+  &:before
+    position absolute
+    top 10px
+    z-index -1
+
+    display block
+    width 20px
+    height 20px
+
+    content ''
+    background center no-repeat
+    background-size 100%
+    background-image url("../../images/diamond.png")
+
+  .s-popup-inner
+    width 100%
+    height 100%
+    overflow hidden
+
+  .s-notifications, .s-messages, .s-search
+    display none
+    width 100%
+
+
+.s-popup-items
+  display inline-block
+  width 100%
+  height 100%
+  margin 0
+  padding 0 5px 0 44px
+  box-sizing border-box
+
+  font-size 0
+
+  .s-popup-item
+    display inline-block
+    width 100%
+    height 48px
+    overflow hidden
+    border-top 1px solid #e3e3e3
+
+    &:last-child
+      border-bottom 1px solid #e3e3e3
+
+    .s-item-image
+      position absolute
+
+      display inline-block
+      width 30px
+      height 48px
+      margin-left -28px
+      padding-top 9px
+      box-sizing border-box
+
+      .s-img
+        width 30px
+
+    .s-item-info
+      display inline-block
+      width 100%
+      height 100%
+      padding 7px 2px 7px 12px
+      box-sizing border-box
+
+      text-align left
+
+      .s-time
+        position absolute
+        right 7px
+
+        display block
+
+        font-family museo300
+        font-size 9px
+        color #979797
+        text-transform uppercase
+
+      .s-user-name
+        display inline-block
+        width 100%
+        height 19px
+        padding-right 8px
+        box-sizing border-box
+        overflow hidden
+
+        font-family museo300
+        font-size 15px
+        color #000
+
+      .s-text
+        display inline-block
+        width 100%
+        height 16px
+        overflow hidden
+
+        font-family museo300
+        font-size 13px
+        color #979797
+        white-space nowrap
+        text-overflow ellipsis
+
+
+.s-messages-notifications-toggle
+  display inline-block
+  width 100%
+  height 48px
+
+  color #979797
+
+  .s-popup-toggle-button
+    display inline-block
+    height 100%
+    padding 0 10px
+
+    font-family museo300
+    font-size 11px
+    color #979797
+    text-transform uppercase
+    line-height 48px
+
+.s-search-input-wrapper
+  display inline-block
+  width 100%
+  height 48px
+  padding 9px 25px
+  box-sizing border-box
+
+  color #979797
+
+  .s-search-label
+    display block
+    width 100%
+    height 100%
+
+  .s-input
+    width 100%
+    height 30px
+    border none
+    border-bottom 1px solid #e3e3e3
+
+    font-family museo300
+    font-size 16px
+    color #979797
+
+
+.s-popup
+  &.notification
+    &:before
+      top -10px
+      right 12px
+
+    .s-notifications
+      display inline-block
+
+    .s-search, .s-messages, .s-search-input-wrapper
+      display none
+
+    .s-popup-toggle-button.notification
+      color #000
+
+  &.message
+    &:before
+      top -10px
+      right 12px
+
+    .s-messages
+      display inline-block
+
+    .s-search, .s-notifications, .s-search-input-wrapper
+      display none
+
+    .s-popup-toggle-button.message
+      color #000
+
+  &.search
+    &:before
+      top -10px
+      right 58px
+
+    .s-search
+      display inline-block
+
+    .s-messages-notifications-toggle, .s-notifications, .s-messages
+      display none
+

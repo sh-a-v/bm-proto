@@ -2,7 +2,21 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
   $scope.popup = {
     active: false,
 
+    initialize: function () {
+      this.setEventListeners();
+    },
+
+    setEventListeners: function () {
+      $scope.$on('messages:activated', this.activate.bind(this));
+      $scope.$on('notifications:activated', this.activate.bind(this));
+      $scope.$on('search:activated', this.activate.bind(this));
+    },
+
     activate: function () {
+      if (this.isActive()) {
+        return;
+      }
+
       this.active = true;
       this._broadcastPopupActivated();
     },
@@ -14,10 +28,6 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
 
     toggle: function () {
       this.isActive() ? this.deactivate() : this.activate();
-    },
-
-    stop: function () {
-      console.log('stopped');
     },
 
     isActive: function () {
@@ -32,4 +42,6 @@ app.popup.controller('PopupCtrl', ['$scope', function ($scope) {
       $scope.$broadcast('popup:deactivated');
     }
   };
+
+  $scope.popup.initialize();
 }]);
