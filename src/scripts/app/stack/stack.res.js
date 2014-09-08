@@ -43,4 +43,10 @@ app.stack
     return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/a/subscribed.json', {
       'auth_token': CONFIG.api.token
     })
+  }])
+
+  .factory('CatalogShelvesResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/a/subscribed.json', {
+      'auth_token': CONFIG.api.token
+    })
   }]);

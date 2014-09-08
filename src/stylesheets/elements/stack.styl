@@ -6,10 +6,11 @@
   height 100%
   box-sizing border-box
 
+  text-align center
   background-color background-color
 
 .s-big-item-card-wrapper
-  position relative
+  position absolute
   top 0
   left 0
   z-index 3
@@ -90,12 +91,14 @@
       text-align right
 
       .s-img
+        position relative
+        display block
         height 200px
 
         box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
 
       .s-blank
-        display inline-block
+        display block
         height 200px
         width 130px
         padding 20px 10px
@@ -107,12 +110,13 @@
         box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
         text-align center
 
-      .read
-        position absolute
+      .book-button
+        position relative
 
-        display inline-block
+        display block
         width 30px
-        margin -15px 0 0 -17px
+        margin -13px -13px 0 0
+        float: right;
 
         text-align center
 
@@ -191,13 +195,338 @@
       line-height 20px
 
   .quote
-    display none
+    .quote-text
+      display inline-block
+      width 100%
+      height 100%
+      padding 20px 15px 90px
+      box-sizing border-box
+      overflow hidden
+
+      font-family lucida
+      font-size 20px
+      line-height 30px
+      text-align left
+
+    .quote-book-wrapper
+      display block
+      width 100%
+      height 90px
+      margin-top -90px
+      padding 0 15px
+      box-sizing border-box
+
+    .quote-like
+      position relative
+      display block
+      margin -30px 0 0 0
+      float right
+
+    .quote-book
+      display inline-table
+      width 100%
+      height 100%
+      padding 18px 3px 18px
+      box-sizing border-box
+      overflow hidden
+
+      border-top 1px solid #e7e7e7
+
+    .quote-book-cover
+      display table-cell
+      width 35px
+      vertical-align middle
+
+      .s-img
+        display block
+        width 35px
+        height 50px
+
+      .book-button
+        position relative
+
+        display block
+        margin -12px -8px 0 0
+        float right
+
+    .quote-book-info
+      display table-cell
+      vertical-align middle
+
+      text-align left
+
+      .s-authors, .s-title
+        display inline-block
+        width 100%
+        max-height 20px
+        padding-left 20px
+        box-sizing border-box
+        overflow hidden
+
+        font-family museo300
+        font-size 13px
+
+      .s-authors
+        color #979797
+
+  .friend
+    .user-wrapper
+      position relative
+
+      width 100%
+      height 102px
+      padding 16px 15px
+      box-sizing border-box
+
+      text-align left
+
+    .s-photo
+      width 100%
+      height 28px
+
+      .s-img
+        width 28px
+        height 28px
+
+    .s-doing-wrapper
+      width 100%
+      height 18px
+      margin-top 8px
+      overflow hidden
+
+      font-size 0
+
+    .s-name, .s-doing
+      display inline-block
+      max-width 40%
+      box-sizing border-box
+      overflow hidden
+      vertical-align top
+
+      font-family museo300
+      font-size 15px
+
+    .s-doing
+      max-width 60%
+      padding-left 3px
+      overflow hidden
+      color #979797
+
+    .s-time
+      width 100%
+      margin-top 2px
+
+      font-family museo300
+      font-size 9px
+      color #979797
+      text-transform uppercase
+
+    .cover
+      margin-top 20px
+
+    .quote-text
+      padding-top 10px
+      padding-bottom 192px
+
+    .quote-book-wrapper
+      margin-top -192px
+
+    &.quote
+      .cover, .title-authors-wrapper
+        display none
+
+    &.book
+      .quote-text, .quote-book-wrapper
+        display none
 
   .shelf
-    display none
+    .shelf-user
+      position relative
+      z-index 3
+
+      display block
+      width 100%
+      height 30px
+      margin-bottom -50px
+      padding-top 20px
+      overflow hidden
+
+      font-size 0
+      text-align left
+
+      .s-img
+        width 30px
+        height 30px
+        margin 0 10px 0 15px
+        float left
+
+      .s-name
+        font-family museo300
+        font-size 15px
+        line-height 30px
+        color #ffffff
+
+    .shelf-bg
+      position relative
+      z-index 2
+
+      width 100%
+
+      .s-img
+        width 100%
+        border-radius 2px 1px 0 0
+
+    .shelf-button-add
+      position relative
+      z-index 3
+
+      float right
+      margin -13px 20px 0 0
+
+    .shelf-info
+      position relative
+
+      display block
+      width 100%
+      margin 40px 0 0
+      padding 0 20px
+      box-sizing border-box
+
+      text-align left
+
+      .s-title
+        display block
+
+        width 100%
+        height 20px
+        overflow hidden
+
+        font-family museo500
+        font-size 20px
+        line-height 20px
+
+      .s-description
+        display block
+
+        width 100%
+        max-height 180px
+        margin-top 8px
+        overflow hidden
+
+        font-family museo300
+        font-size 13px
+        line-height 20px
+        color #979797
+
+    .shelf-watchers
+      position relative
+
+      width 100%
+      margin 15px 0 0
+      padding 0 20px
+      box-sizing border-box
+
+      text-align left
+
+      .s-count
+        font-family museo300
+        font-size 11px
+        color #979797
+
+    .shelf-time
+      position absolute
+      left 15px
+      bottom 15px
+
+      font-family museo300
+      font-size 9px
+      color #979797
+      text-transform uppercase
 
 .s-hidden-next-cover
   position absolute
   top 25px
   left 25%
   z-index -1
+
+.s-item-card-list-wrapper
+  position relative
+
+  display inline-block
+  width 307px
+  height 100%
+  margin 0
+  padding 0
+  overflow-y auto
+
+  font-size 0
+  text-align left
+
+  .s-item-card-list-el
+    position relative
+
+    display inline-block
+    width 150px
+    height 200px
+    margin 0 0 7px 0
+    box-sizing border-box
+    border 1px solid #c1c1c1
+    border-radius 2px
+
+    background #fff
+    text-align center
+
+    &:nth-child(even)
+      margin-left 7px
+
+    .cover
+      position relative
+
+      display inline-block
+      height 140px
+      width auto
+      margin-top 20px
+
+      text-align right
+
+      .s-img
+        position relative
+        display block
+        height 140px
+
+        box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
+
+      .s-blank
+        display block
+        height 140px
+        width 94px
+        padding 15px 7px
+        box-sizing border-box
+        overflow: hidden;
+
+        border 1px
+        background: #f6f4ee;
+        box-shadow 0 0 7px rgba(0, 0, 0, 0.36)
+        text-align center
+
+      .book-button
+        position relative
+
+        display block
+        width 30px
+        margin -13px -13px 0 0
+        float: right;
+
+        text-align center
+
+    .progress
+      position absolute
+      left 10px
+      bottom 10px
+
+      font-family museo300
+      font-size 9px
+      color #979797
+
+  &.fake
+    opacity 0

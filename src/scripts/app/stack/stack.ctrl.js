@@ -1,7 +1,10 @@
 app.stack.controller('StackCtrl', [
-  '$rootScope', '$scope', '$state', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource',
-  function ($rootScope, $scope, $state, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource) {
+  '$rootScope', '$scope', '$state', '$timeout', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource', 'CatalogShelvesResource',
+  function ($rootScope, $scope, $state, $timeout, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource, CatalogShelvesResource) {
     $scope.stack = {
+      expandedView: false,
+      expandingView: false,
+
       distance: 0,
       currentItem: null,
       animatedItem: null,
@@ -15,7 +18,8 @@ app.stack.controller('StackCtrl', [
         'CatalogBestResource': CatalogBestResource,
         'CatalogNewResource': CatalogNewResource,
         'CatalogPopularResource': CatalogPopularResource,
-        'CatalogFriendsResource': CatalogFriendsResource
+        'CatalogFriendsResource': CatalogFriendsResource,
+        'CatalogShelvesResource': CatalogShelvesResource
       },
 
       initialize: function () {
@@ -29,6 +33,10 @@ app.stack.controller('StackCtrl', [
 
         $scope.$on('stack:nextItemHidden', this.setDefaultStateAfterNextItemHidden.bind(this));
         $scope.$on('stack:previousItemHidden', this.setDefaultStateAfterPreviousItemHidden.bind(this));
+
+        $scope.$on('stack:stackedView', this.setStackedView.bind(this));
+        $scope.$on('stack:expandedView', this.setExpandedView.bind(this));
+        $scope.$on('stack:expandingViewPartially', this.setExpandingView.bind(this));
       },
 
       setUserItemList: function (res) {
@@ -97,26 +105,47 @@ app.stack.controller('StackCtrl', [
         this.firstItemShowed = !this.previousItem;
       },
 
+      setStackElement: function (id) {
+        this.setCurrentItem(this.getItemById(id));
+        this.setAnimatedItem(this.getItemById(id));
+
+        this._broadcastStackedViewFromExpanded();
+      },
+
+      setExpandingView: function () {
+        this.expandingView = true;
+      },
+
+      setExpandedView: function () {
+        this.expandedView = !this.expandedView;
+        this.expandingView = false;
+
+        $scope.$apply();
+      },
+
+      setStackedView: function (id) {
+        this.expandedView = false;
+
+        $scope.$apply();
+      },
+
       _handleRes: function (res) {
         if (angular.isObject(res) && res.objects) {
           res = res.objects;
         }
 
-        angular.forEach(res, function (item) {
-          item.type = $state.$current.type || '';
-        }.bind(this));
-
         if ($state.$current.resource === 'UserMarkersResource') {
-          var markersRes = [];
+          res = [];
+        }
 
-          angular.forEach(res, function (markers) {
-            angular.forEach(markers[0], function (marker) {
-              marker.type = 'quote';
-              markersRes.push(marker);
-            })
-          }.bind(this));
-
-          res = markersRes;
+        if ($state.$current.resource === 'CatalogFriendsResource') {
+          res = this.friendsList;
+        }
+        if ($state.$current.resource === 'UserMarkersResource') {
+          res = this.quotesList;
+        }
+        if ($state.$current.resource === 'CatalogShelvesResource') {
+          res = this.shelvesList;
         }
 
         if (res.length === 0 || res.length === 1) {
@@ -138,8 +167,11 @@ app.stack.controller('StackCtrl', [
           .then(this.setUserItemList.bind(this));
       },
 
+      getItemById: function (id) {
+        return _.find(this.currentItemList, {uuid: id});
+      },
+
       getNextItemFully: function ($event) {
-        console.log('next fully');
         if (!this.isItemShowingPartially()) {
           if (!this.nextItem) {
             return;
@@ -173,10 +205,14 @@ app.stack.controller('StackCtrl', [
           return;
         }
 
+        if (this.isExpandingView()) {
+          return;
+        }
+
         this.previousDistance = this.distance || 0;
         this.distance = $event.deltaX;
 
-        if (this.previousDistance < 0 && this.distance > 0) {
+        if (this.previousDistance < 0 && this.distance >= 0) {
           this.distance = -1;
         }
 
@@ -213,7 +249,6 @@ app.stack.controller('StackCtrl', [
         }
 
         this._broadcastShowPreviousItemPartially($event);
-
       },
 
       endGetItemPartially: function ($event) {
@@ -244,6 +279,14 @@ app.stack.controller('StackCtrl', [
         return this.itemShowingPartially;
       },
 
+      isExpandedView: function () {
+        return this.expandedView;
+      },
+
+      isExpandingView: function () {
+        return this.expandingView;
+      },
+
       _broadcastShowNextItemFully: function ($event) {
         $scope.$broadcast('stack:showNextItemFully', $event);
       },
@@ -262,7 +305,65 @@ app.stack.controller('StackCtrl', [
 
       _broadcastEndShowItemPartially: function ($event, distance) {
         $scope.$broadcast('stack:endShowItemPartially', $event, distance);
-      }
+      },
+
+      _broadcastStackedViewFromExpanded: function () {
+        $scope.$broadcast('stack:stackedViewFromExpanded');
+      },
+
+      _broadcastToggleView: function () {
+        $scope.$broadcast('stack:toggleView');
+      },
+
+      friendsList: [{
+        user: {
+          photo: '/src/images/photo1.png',
+          name: 'Alex Gusev'
+        },
+        time: 'yesterday',
+        type: 'quote',
+        doing: 'highlights',
+        text: "I'm scared of the geese. When I was five, my mom took me down there to feed those horrible beasts and one of them nearly took my hand off",
+        book: {
+          title: 'The Summer I Became a Nerd',
+          authors: 'Leah Rae Miller',
+          cover: '/src/images/small-cover.png'
+        }
+      }, {
+        user: {
+          photo: '/src/images/photo1.png',
+          name: 'Alex Gusev'
+        },
+        time: 'yesterday',
+        type: 'book',
+        doing: 'wants to read',
+        book: {
+          title: 'Translation Nation',
+          authors: 'Hector Tobar',
+          cover: '/src/images/big-cover.png'
+        }
+      }],
+
+      quotesList: [{
+        text: "I'm scared of the geese. When I was five, my mom took me down there to feed those horrible beasts and one of them nearly took my hand off",
+        book: {
+          title: 'The Summer I Became a Nerd',
+          authors: 'Leah Rae Miller',
+          cover: '/src/images/small-cover.png'
+        }
+      }],
+
+      shelvesList: [{
+        user: {
+          photo: '/src/images/photo2.png',
+          name: 'NYtimes'
+        },
+        bg: '/src/images/shelf1.png',
+        time: 'yesterday',
+        title: 'Travel in Foreign Lands',
+        description: 'A collection of books about planes, trains, automobiles and getting lost in a foreign lan',
+        count: '156'
+      }]
     };
 
     $scope.stack.initialize();

@@ -1,0 +1,44 @@
+<stack class="s-stack">
+    <div class="s-big-item-card-wrapper"
+         hm-swipe-left="stack.getNextItemFully($event)"
+         hm-swipe-right="stack.getPreviousItemFully($event)"
+         hm-pan-left="stack.getItemPartially($event)"
+         hm-pan-right="stack.getItemPartially($event)"
+         hm-pan-end="stack.endGetItemPartially($event)">
+
+        <div class="s-big-item-card quote">
+            <div class="quote-text">
+                <span ng-bind="stack.currentItem.text"></span>
+            </div>
+            <div class="quote-book-wrapper">
+                <div class="quote-book">
+                    <div class="quote-book-cover">
+                        <img class="s-img" ng-src="{{ stack.currentItem.book.cover }}">
+                        <div class="book-button"><i class="s-icon s-icon-read small"></i></div>
+                    </div>
+                    <div class="quote-book-info">
+                        <span class="s-authors" ng-bind="stack.currentItem.book.authors"></span>
+                        <span class="s-title" ng-bind="stack.currentItem.book.title"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="animated-item-card" class="s-animated-big-item-card quote">
+            <div class="quote-text">
+                <span ng-bind="stack.animatedItem.text"></span>
+            </div>
+            <div class="quote-book-wrapper">
+                <div class="quote-book">
+                    <div class="quote-book-cover">
+                        <img class="s-img" ng-src="{{ stack.animatedItem.book.cover }}">
+                    </div>
+                    <div class="quote-book-info">
+                        <span class="s-authors" ng-bind="stack.animatedItem.book.authors"></span>
+                        <span class="s-title" ng-bind="stack.animatedItem.book.title"></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</stack>

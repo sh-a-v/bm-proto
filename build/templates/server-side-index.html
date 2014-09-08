@@ -42,8 +42,8 @@
             </div>
         </footer>
 
-        <div id="popup-wrapper" class="s-popup-wrapper" >
-            <popup id="popup" class="s-popup"  ng-class="{message: messages.isActive(), notification: notifications.isActive(), search: search.isActive()}"></popup>
+        <div id="popup-wrapper" class="s-popup-wrapper" ng-click="popup.deactivate()">
+            <popup id="popup" class="s-popup" ng-click="$event.stopPropagation()" ng-class="{message: messages.isActive(), notification: notifications.isActive(), search: search.isActive()}"></popup>
         </div>
 
     </main>

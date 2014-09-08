@@ -9,7 +9,7 @@ var
 var config = {
   client: {
     staticFilesPath: path.join(__dirname, ''),
-    baseTemplatePath: path.join(__dirname, 'build/templates/server-side.html')
+    baseTemplatePath: path.join(__dirname, 'build/templates/server-side-index.html')
   },
 
   server: {

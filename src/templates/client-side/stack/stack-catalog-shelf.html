@@ -1,0 +1,33 @@
+<stack class="s-stack">
+    <div class="s-big-item-card-wrapper"
+         hm-swipe-left="stack.getNextItemFully($event)"
+         hm-swipe-right="stack.getPreviousItemFully($event)"
+         hm-pan-left="stack.getItemPartially($event)"
+         hm-pan-right="stack.getItemPartially($event)"
+         hm-pan-end="stack.endGetItemPartially($event)">
+
+        <div class="s-big-item-card shelf">
+            <div class="shelf-user">
+                <img class="s-img" ng-src="{{ stack.currentItem.user.photo }}">
+                <span class="s-name" ng-bind="stack.currentItem.user.name"></span>
+            </div>
+            <div class="shelf-bg">
+                <img class="s-img" ng-src="{{ stack.currentItem.bg }}">
+            </div>
+            <div class="shelf-button-add"><i class="s-icon s-icon-add"></i></div>
+            <div class="shelf-info">
+                <span class="s-title" ng-bind="stack.currentItem.title"></span>
+                <span class="s-description" ng-bind="stack.currentItem.description"></span>
+            </div>
+            <div class="shelf-watchers">
+                <i class="s-icon s-icon-eye"></i>
+                <span class="s-count" ng-bind="stack.currentItem.count"></span>
+            </div>
+            <span class="shelf-time" ng-bind="stack.currentItem.time"></span>
+        </div>
+
+        <div id="animated-item-card" class="s-animated-big-item-card shelf">
+
+        </div>
+    </div>
+</stack>

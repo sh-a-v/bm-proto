@@ -13,28 +13,28 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
       url: '/now',
       title: 'Read now',
       resource: 'UserBookListReadNowResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.want', {
       url: '/want',
       title: 'Want to read',
       resource: 'UserBookListReadWantResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.all', {
       url: '/all',
       title: 'All books',
       resource: 'UserBookListAllResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.quotes', {
       url: '/quotes',
       title: 'Quotes',
       resource: 'UserMarkersResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-quote.html',
       type: 'quote'
     })
 
@@ -47,27 +47,28 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
       url: '/all',
       title: 'Catalog',
       resource: 'CatalogNewResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-book.html',
       type: 'book'
     })
     .state('catalog.friends', {
       url: '/friends',
       title: 'Friends',
       resource: 'CatalogFriendsResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-friend.html',
       type: ''
     })
     .state('catalog.popular', {
       url: '/popular',
       title: 'Popular',
       resource: 'CatalogPopularResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-book.html',
       type: 'book'
     })
     .state('catalog.shelves', {
       url: '/shelves',
       title: 'Shelves',
-      templateUrl: 'stack.html',
+      resource: 'CatalogShelvesResource',
+      templateUrl: 'stack/stack-catalog-shelf.html',
       type: 'shelf'
     });
 

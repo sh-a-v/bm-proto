@@ -1,0 +1,99 @@
+<stack class="s-stack">
+    <div class="s-big-item-card-wrapper"
+         hm-swipe-left="stack.getNextItemFully($event)"
+         hm-swipe-right="stack.getPreviousItemFully($event)"
+         hm-pan-left="stack.getItemPartially($event)"
+         hm-pan-right="stack.getItemPartially($event)"
+         hm-pan-end="stack.endGetItemPartially($event)">
+
+        <div class="s-big-item-card friend" ng-class="stack.currentItem.type">
+            <div class="user-wrapper">
+                <div class="s-photo">
+                    <img class="s-img" ng-src="{{ stack.currentItem.user.photo }}">
+                </div>
+                <div class="s-doing-wrapper">
+                    <span class="s-name" ng-bind="stack.currentItem.user.name"></span>
+                    <span class="s-doing" ng-bind="stack.currentItem.doing"></span>
+                </div>
+                <div class="s-time">
+                    <span ng-bind="stack.currentItem.time"></span>
+                </div>
+            </div>
+
+            <div class="quote-text">
+                <span ng-bind="stack.currentItem.text"></span>
+            </div>
+            <div class="quote-book-wrapper">
+                <div class="quote-like"><i class="s-icon s-icon-like"></i></div>
+                <div class="quote-book">
+                    <div class="quote-book-cover">
+                        <img class="s-img" ng-src="{{ stack.currentItem.book.cover }}">
+                        <div class="book-button"><i class="s-icon s-icon-add"></i></div>
+                    </div>
+                    <div class="quote-book-info">
+                        <span class="s-authors" ng-bind="stack.currentItem.book.authors"></span>
+                        <span class="s-title" ng-bind="stack.currentItem.book.title"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cover">
+                <img class="s-img" ng-if="stack.currentItem.book.cover" ng-src="{{ stack.currentItem.book.cover }}">
+                <div class="s-blank" ng-if="!stack.currentItem.book.cover">
+                    <span class="s-blank-title" ng-bind="stack.currentItem.book.title"></span>
+                    <span class="s-blank-authors" ng-bind="stack.currentItem.book.authors"></span>
+                </div>
+                <div class="book-button"><i class="s-icon s-icon-add"></i></div>
+            </div>
+            <div class="title-authors-wrapper">
+                <div class="title" ng-bind="stack.currentItem.book.title"></div>
+                <div class="authors" ng-bind="stack.currentItem.book.authors"></div>
+            </div>
+        </div>
+
+        <div id="animated-item-card" class="s-animated-big-item-card friend" ng-class="stack.animatedItem.type">
+            <div class="user-wrapper">
+                <div class="s-photo">
+                    <img class="s-img" ng-src="{{ stack.animatedItem.user.photo }}">
+                </div>
+                <div class="s-doing-wrapper">
+                    <span class="s-name" ng-bind="stack.animatedItem.user.name"></span>
+                    <span class="s-doing" ng-bind="stack.animatedItem.doing"></span>
+                </div>
+                <div class="s-time">
+                    <span ng-bind="stack.animatedItem.time"></span>
+                </div>
+            </div>
+
+            <div class="quote-text">
+                <span ng-bind="stack.animatedItem.text"></span>
+            </div>
+            <div class="quote-book-wrapper">
+                <div class="quote-like"><i class="s-icon s-icon-like"></i></div>
+                <div class="quote-book">
+                    <div class="quote-book-cover">
+                        <img class="s-img" ng-src="{{ stack.animatedItem.book.cover }}">
+                        <div class="book-button"><i class="s-icon s-icon-add"></i></div>
+                    </div>
+                    <div class="quote-book-info">
+                        <span class="s-authors" ng-bind="stack.animatedItem.book.authors"></span>
+                        <span class="s-title" ng-bind="stack.animatedItem.book.title"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="cover">
+                <img class="s-img" ng-if="stack.animatedItem.book.cover" ng-src="{{ stack.animatedItem.book.cover }}">
+                <div class="s-blank" ng-if="!stack.animatedItem.book.cover">
+                    <span class="s-blank-title" ng-bind="stack.animatedItem.book.title"></span>
+                    <span class="s-blank-authors" ng-bind="stack.animatedItem.book.authors"></span>
+                </div>
+                <div class="book-button"><i class="s-icon s-icon-add"></i></div>
+            </div>
+            <div class="title-authors-wrapper">
+                <div class="title" ng-bind="stack.animatedItem.book.title"></div>
+                <div class="authors" ng-bind="stack.animatedItem.book.authors"></div>
+            </div>
+        </div>
+    </div>
+</stack>

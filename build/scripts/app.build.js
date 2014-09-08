@@ -13,28 +13,28 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
       url: '/now',
       title: 'Read now',
       resource: 'UserBookListReadNowResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.want', {
       url: '/want',
       title: 'Want to read',
       resource: 'UserBookListReadWantResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.all', {
       url: '/all',
       title: 'All books',
       resource: 'UserBookListAllResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-book.html',
       type: 'book'
     })
     .state('home.quotes', {
       url: '/quotes',
       title: 'Quotes',
       resource: 'UserMarkersResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-home-quote.html',
       type: 'quote'
     })
 
@@ -47,27 +47,28 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
       url: '/all',
       title: 'Catalog',
       resource: 'CatalogNewResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-book.html',
       type: 'book'
     })
     .state('catalog.friends', {
       url: '/friends',
       title: 'Friends',
       resource: 'CatalogFriendsResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-friend.html',
       type: ''
     })
     .state('catalog.popular', {
       url: '/popular',
       title: 'Popular',
       resource: 'CatalogPopularResource',
-      templateUrl: 'stack.html',
+      templateUrl: 'stack/stack-catalog-book.html',
       type: 'book'
     })
     .state('catalog.shelves', {
       url: '/shelves',
       title: 'Shelves',
-      templateUrl: 'stack.html',
+      resource: 'CatalogShelvesResource',
+      templateUrl: 'stack/stack-catalog-shelf.html',
       type: 'shelf'
     });
 
@@ -81,7 +82,7 @@ app.config(function($stateProvider, $locationProvider, $resourceProvider, $urlRo
     .defaults.stripTrailingSlashes = true;
 });
 
-app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource', function ($rootScope, $scope, $state, BookListsResource) {
+app.controller('AppCtrl', ['$rootScope', '$scope', '$state', function ($rootScope, $scope, $state) {
   $scope.app = {
     $state: $state,
     savedState: {
@@ -90,8 +91,7 @@ app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource'
     },
 
     initialize: function () {
-      this.setBookLists();
-      //this.fetchBookLists();
+
     },
 
     getCurrentTitle: function () {
@@ -121,26 +121,7 @@ app.controller('AppCtrl', ['$rootScope', '$scope', '$state', 'BookListsResource'
       } else {
         this.$state.go(this.savedState.home);
       }
-    },
-
-    setBookLists: function () {
-      this.bookLists = [];
-    },
-
-    fetchBookLists: function () {
-      BookListsResource.query(function (res) {
-        console.log('booklists:', res);
-      });
     }
-    /*,
-
-    getBookLists: function () {
-      return this.bookLists;
-    },
-
-    fetchBookLists: function () {
-      BookListsResource.get()
-    }*/
   };
 
   $scope.app.initialize();
@@ -353,9 +334,12 @@ app.popup.directive('popup', ['$window', function ($window) {
 }]);
 
 app.stack.controller('StackCtrl', [
-  '$rootScope', '$scope', '$state', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource',
-  function ($rootScope, $scope, $state, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource) {
+  '$rootScope', '$scope', '$state', '$timeout', 'UserBookListReadNowResource', 'UserBookListReadWantResource', 'UserBookListAllResource', 'UserMarkersResource', 'CatalogNewResource', 'CatalogBestResource', 'CatalogPopularResource', 'CatalogFriendsResource', 'CatalogShelvesResource',
+  function ($rootScope, $scope, $state, $timeout, UserBookListReadNowResource, UserBookListReadWantResource, UserBookListAllResource, UserMarkersResource, CatalogNewResource, CatalogBestResource, CatalogPopularResource, CatalogFriendsResource, CatalogShelvesResource) {
     $scope.stack = {
+      expandedView: false,
+      expandingView: false,
+
       distance: 0,
       currentItem: null,
       animatedItem: null,
@@ -369,7 +353,8 @@ app.stack.controller('StackCtrl', [
         'CatalogBestResource': CatalogBestResource,
         'CatalogNewResource': CatalogNewResource,
         'CatalogPopularResource': CatalogPopularResource,
-        'CatalogFriendsResource': CatalogFriendsResource
+        'CatalogFriendsResource': CatalogFriendsResource,
+        'CatalogShelvesResource': CatalogShelvesResource
       },
 
       initialize: function () {
@@ -383,6 +368,10 @@ app.stack.controller('StackCtrl', [
 
         $scope.$on('stack:nextItemHidden', this.setDefaultStateAfterNextItemHidden.bind(this));
         $scope.$on('stack:previousItemHidden', this.setDefaultStateAfterPreviousItemHidden.bind(this));
+
+        $scope.$on('stack:stackedView', this.setStackedView.bind(this));
+        $scope.$on('stack:expandedView', this.setExpandedView.bind(this));
+        $scope.$on('stack:expandingViewPartially', this.setExpandingView.bind(this));
       },
 
       setUserItemList: function (res) {
@@ -451,26 +440,47 @@ app.stack.controller('StackCtrl', [
         this.firstItemShowed = !this.previousItem;
       },
 
+      setStackElement: function (id) {
+        this.setCurrentItem(this.getItemById(id));
+        this.setAnimatedItem(this.getItemById(id));
+
+        this._broadcastStackedViewFromExpanded();
+      },
+
+      setExpandingView: function () {
+        this.expandingView = true;
+      },
+
+      setExpandedView: function () {
+        this.expandedView = !this.expandedView;
+        this.expandingView = false;
+
+        $scope.$apply();
+      },
+
+      setStackedView: function (id) {
+        this.expandedView = false;
+
+        $scope.$apply();
+      },
+
       _handleRes: function (res) {
         if (angular.isObject(res) && res.objects) {
           res = res.objects;
         }
 
-        angular.forEach(res, function (item) {
-          item.type = $state.$current.type || '';
-        }.bind(this));
-
         if ($state.$current.resource === 'UserMarkersResource') {
-          var markersRes = [];
+          res = [];
+        }
 
-          angular.forEach(res, function (markers) {
-            angular.forEach(markers[0], function (marker) {
-              marker.type = 'quote';
-              markersRes.push(marker);
-            })
-          }.bind(this));
-
-          res = markersRes;
+        if ($state.$current.resource === 'CatalogFriendsResource') {
+          res = this.friendsList;
+        }
+        if ($state.$current.resource === 'UserMarkersResource') {
+          res = this.quotesList;
+        }
+        if ($state.$current.resource === 'CatalogShelvesResource') {
+          res = this.shelvesList;
         }
 
         if (res.length === 0 || res.length === 1) {
@@ -492,8 +502,11 @@ app.stack.controller('StackCtrl', [
           .then(this.setUserItemList.bind(this));
       },
 
+      getItemById: function (id) {
+        return _.find(this.currentItemList, {uuid: id});
+      },
+
       getNextItemFully: function ($event) {
-        console.log('next fully');
         if (!this.isItemShowingPartially()) {
           if (!this.nextItem) {
             return;
@@ -527,10 +540,14 @@ app.stack.controller('StackCtrl', [
           return;
         }
 
+        if (this.isExpandingView()) {
+          return;
+        }
+
         this.previousDistance = this.distance || 0;
         this.distance = $event.deltaX;
 
-        if (this.previousDistance < 0 && this.distance > 0) {
+        if (this.previousDistance < 0 && this.distance >= 0) {
           this.distance = -1;
         }
 
@@ -567,7 +584,6 @@ app.stack.controller('StackCtrl', [
         }
 
         this._broadcastShowPreviousItemPartially($event);
-
       },
 
       endGetItemPartially: function ($event) {
@@ -598,6 +614,14 @@ app.stack.controller('StackCtrl', [
         return this.itemShowingPartially;
       },
 
+      isExpandedView: function () {
+        return this.expandedView;
+      },
+
+      isExpandingView: function () {
+        return this.expandingView;
+      },
+
       _broadcastShowNextItemFully: function ($event) {
         $scope.$broadcast('stack:showNextItemFully', $event);
       },
@@ -616,7 +640,65 @@ app.stack.controller('StackCtrl', [
 
       _broadcastEndShowItemPartially: function ($event, distance) {
         $scope.$broadcast('stack:endShowItemPartially', $event, distance);
-      }
+      },
+
+      _broadcastStackedViewFromExpanded: function () {
+        $scope.$broadcast('stack:stackedViewFromExpanded');
+      },
+
+      _broadcastToggleView: function () {
+        $scope.$broadcast('stack:toggleView');
+      },
+
+      friendsList: [{
+        user: {
+          photo: '/src/images/photo1.png',
+          name: 'Alex Gusev'
+        },
+        time: 'yesterday',
+        type: 'quote',
+        doing: 'highlights',
+        text: "I'm scared of the geese. When I was five, my mom took me down there to feed those horrible beasts and one of them nearly took my hand off",
+        book: {
+          title: 'The Summer I Became a Nerd',
+          authors: 'Leah Rae Miller',
+          cover: '/src/images/small-cover.png'
+        }
+      }, {
+        user: {
+          photo: '/src/images/photo1.png',
+          name: 'Alex Gusev'
+        },
+        time: 'yesterday',
+        type: 'book',
+        doing: 'wants to read',
+        book: {
+          title: 'Translation Nation',
+          authors: 'Hector Tobar',
+          cover: '/src/images/big-cover.png'
+        }
+      }],
+
+      quotesList: [{
+        text: "I'm scared of the geese. When I was five, my mom took me down there to feed those horrible beasts and one of them nearly took my hand off",
+        book: {
+          title: 'The Summer I Became a Nerd',
+          authors: 'Leah Rae Miller',
+          cover: '/src/images/small-cover.png'
+        }
+      }],
+
+      shelvesList: [{
+        user: {
+          photo: '/src/images/photo2.png',
+          name: 'NYtimes'
+        },
+        bg: '/src/images/shelf1.png',
+        time: 'yesterday',
+        title: 'Travel in Foreign Lands',
+        description: 'A collection of books about planes, trains, automobiles and getting lost in a foreign lan',
+        count: '156'
+      }]
     };
 
     $scope.stack.initialize();
@@ -627,12 +709,16 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
     restrict: 'E',
     controller: 'StackCtrl',
     link: function (scope, el, attrs) {
+
+      /* Stack general */
+
       scope.stack.view = {
         elWidth: 308,
         defaultDuration: 150,
 
         initialize: function () {
           this.setEventListeners();
+          this.setElementEventListeners();
         },
 
         setEventListeners: function () {
@@ -643,6 +729,14 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           scope.$on('stack:showPreviousItemPartially', this.showPreviousItemCardPartially.bind(this));
 
           scope.$on('stack:endShowItemPartially', this.endShowItemCardPartially.bind(this));
+
+          scope.$on('stack:stackedViewFromExpanded', this.stackedView.bind(this));
+        },
+
+        setElementEventListeners: function () {
+          angular.element(el).bind('touchstart', this.resetStartPoint.bind(this));
+          angular.element(el).bind('touchmove', this.expandView.bind(this));
+          angular.element(el).bind('touchend', this.endExpandingPartially.bind(this));
         },
 
         getWindowWidth: function () {
@@ -651,6 +745,14 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }
 
           return this.windowWidth;
+        },
+
+        getWindowHeight: function () {
+          if (!this.windowHeight) {
+            this.windowHeight = $window.innerHeight;
+          }
+
+          return this.windowHeight;
         },
 
         getCurrentLeftValue: function () {
@@ -679,6 +781,30 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           return this.animatedItemCard;
         },
 
+        getStackElement: function () {
+          if (!this.stackElement) {
+            this.stackElement = document.getElementById('stack-block');
+          }
+
+          return this.stackElement;
+        },
+
+        getFakeItemCardListElement: function () {
+          if (!this.fakeItemCardListElement) {
+            this.fakeItemCardListElement = document.getElementById('fake-item-card-list-block');
+          }
+
+          return this.fakeItemCardListElement;
+        },
+
+        getItemCardListElement: function () {
+          if (!this.itemCardListElement) {
+            this.itemCardListElement = document.getElementById('item-card-list-block');
+          }
+
+          return this.itemCardListElement;
+        },
+
         activateAnimatedItemCard: function () {
           if (this.active) {
             return;
@@ -705,8 +831,13 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         setAnimatedItemCardToEndState: function () {
           this.getAnimatedItemCard().el.style.left = this.getAnimatedItemCard().endLeft;
           this.activateAnimatedItemCard();
-        },
+        }
+      };
 
+
+      /* Stack cards */
+
+      scope.stack.view = angular.extend({
         showNextItemCardFully: function (e, $event) {
           this.activateAnimatedItemCard();
 
@@ -714,7 +845,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.endLeft
           }, {
@@ -758,7 +888,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.defaultLeftValue
           }, {
@@ -781,7 +910,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.defaultLeft
           }, {
@@ -828,7 +956,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.endLeftValue
           }, {
@@ -883,7 +1010,207 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         _broadcastPreviousItemHidden: function () {
           scope.$broadcast('stack:previousItemHidden');
         }
-      };
+      }, scope.stack.view);
+
+
+      /* Stack expand view */
+
+      scope.stack.view = angular.extend({
+        verticalDistance: 0,
+
+        resetStartPoint: function () {
+          this.touchStartX = null;
+          this.touchStartY = null;
+        },
+
+        expandView: function (e) {
+          if (this.isExpanded()) {
+            return;
+          }
+
+          if (this.isExpandingFully() || this.isShowingPartially()) {
+            return;
+          }
+
+          var touch = e.changedTouches[0] || e.touches[0];
+          var x = touch.pageX;
+          var y = touch.pageY;
+
+          if (this.touchStartX === null && this.touchStartY === null) {
+            this.touchStartX = x;
+            this.touchStartY = y;
+          }
+
+          this.deltaX = this.touchStartX - x;
+          this.deltaY = this.touchStartY - y;
+
+          var absDeltaY = Math.abs(this.deltaY);
+          var absDeltaX = Math.abs(this.deltaX);
+
+          if (this.deltaY < 0 && absDeltaY > absDeltaX) {
+            this.expandViewPartially();
+          }
+        },
+
+        expandViewFully: function () {
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          var el = this.getStackElement();
+          var listEl = this.getItemCardListElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+          var translateY = this.getWindowHeight();
+
+          this.expandingFully = true;
+
+          Velocity(listEl, {
+            opacity: 1
+          }, {
+            duration: 1
+          });
+
+          Velocity(el, {
+            translateY: translateY,
+            scale: 0
+          }, {
+            duration: 150,
+            complete: function () {
+              this.expandingPatially = false;
+              this.expandingFully = false;
+              this._broadcastExpandedView();
+            }.bind(this)
+          });
+        },
+
+        expandViewPartially: function () {
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          if (!this.isExpandingPartially()) {
+            this.expandingPatially = true;
+            this._broadcastExpandingViewPartially();
+          }
+
+          var el = this.getStackElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+          var height = this.getWindowHeight();
+          var translateY = Math.min(0, this.deltaY);
+          var scale = translateY !== 0 ? Math.min(1, 1 - Math.abs(this.deltaY) / height) : 1;
+          var opacity = 1 - scale;
+
+          Velocity(el, {
+            translateY: -translateY,
+            scale: scale
+          }, {
+            duration: 1
+          });
+
+          Velocity(fakeListEl, {
+            opacity: opacity
+          }, {
+            duration: 1
+          });
+        },
+
+        endExpandingPartially: function () {
+          if (!this.isExpandingPartially()) {
+            return;
+          }
+
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          var stackEl = this.getStackElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+
+          var absDeltaY = Math.abs(this.deltaY);
+
+          if (absDeltaY > this.getWindowHeight() / 4) {
+            this.expandViewFully();
+          } else {
+            Velocity(stackEl, {
+              translateY: 0,
+              scale: 1
+            }, {
+              duration: 50,
+              complete: function () {
+                this.expandingFully = false;
+                this.expandingPatially = false;
+              }.bind(this)
+            });
+
+            Velocity(fakeListEl, {
+              opacity: 0
+            }, {
+              duration: 50
+            });
+          }
+        },
+
+        stackedView: function () {
+          var stackEl = this.getStackElement();
+          var listEl = this.getItemCardListElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+
+          Velocity(fakeListEl, {
+            opacity: 0
+          }, {
+            duration: 1
+          });
+
+          Velocity(listEl, {
+            opacity: 0
+          }, {
+            duration: 150,
+            display: 'inline-block',
+            complete: function () {
+
+              this._broadcastStackedView();
+
+              Velocity(stackEl, {
+                translateY: 0,
+                scale: 1
+              }, {
+                duration: 200,
+                display: 'inline-block',
+                complete: function () {
+                }.bind(this)
+              });
+
+            }.bind(this)
+          });
+        },
+
+        isExpandingPartially: function () {
+          return this.expandingPatially;
+        },
+
+        isExpandingFully: function () {
+          return this.expandingFully;
+        },
+
+        isExpanded: function () {
+          return scope.stack.isExpandedView();
+        },
+
+        _broadcastStackedView: function () {
+          scope.$broadcast('stack:stackedView');
+        },
+
+        _broadcastExpandedView: function () {
+          scope.$broadcast('stack:expandedView');
+        },
+
+        _broadcastExpandingViewPartially: function () {
+          scope.$broadcast('stack:expandingViewPartially');
+        }
+      }, scope.stack.view);
+
+
+      /* Initialize */
 
       scope.stack.view.initialize();
     }
@@ -932,6 +1259,12 @@ app.stack
   }])
 
   .factory('CatalogFriendsResource', ['$resource', function ($resource) {
+    return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/a/subscribed.json', {
+      'auth_token': CONFIG.api.token
+    })
+  }])
+
+  .factory('CatalogShelvesResource', ['$resource', function ($resource) {
     return $resource(CONFIG.api.href + '/a/4/u/' + CONFIG.api.login + '/a/subscribed.json', {
       'auth_token': CONFIG.api.token
     })

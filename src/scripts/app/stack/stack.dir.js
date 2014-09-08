@@ -3,12 +3,16 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
     restrict: 'E',
     controller: 'StackCtrl',
     link: function (scope, el, attrs) {
+
+      /* Stack general */
+
       scope.stack.view = {
         elWidth: 308,
         defaultDuration: 150,
 
         initialize: function () {
           this.setEventListeners();
+          this.setElementEventListeners();
         },
 
         setEventListeners: function () {
@@ -19,6 +23,14 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           scope.$on('stack:showPreviousItemPartially', this.showPreviousItemCardPartially.bind(this));
 
           scope.$on('stack:endShowItemPartially', this.endShowItemCardPartially.bind(this));
+
+          scope.$on('stack:stackedViewFromExpanded', this.stackedView.bind(this));
+        },
+
+        setElementEventListeners: function () {
+          angular.element(el).bind('touchstart', this.resetStartPoint.bind(this));
+          angular.element(el).bind('touchmove', this.expandView.bind(this));
+          angular.element(el).bind('touchend', this.endExpandingPartially.bind(this));
         },
 
         getWindowWidth: function () {
@@ -27,6 +39,14 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           }
 
           return this.windowWidth;
+        },
+
+        getWindowHeight: function () {
+          if (!this.windowHeight) {
+            this.windowHeight = $window.innerHeight;
+          }
+
+          return this.windowHeight;
         },
 
         getCurrentLeftValue: function () {
@@ -55,6 +75,30 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
           return this.animatedItemCard;
         },
 
+        getStackElement: function () {
+          if (!this.stackElement) {
+            this.stackElement = document.getElementById('stack-block');
+          }
+
+          return this.stackElement;
+        },
+
+        getFakeItemCardListElement: function () {
+          if (!this.fakeItemCardListElement) {
+            this.fakeItemCardListElement = document.getElementById('fake-item-card-list-block');
+          }
+
+          return this.fakeItemCardListElement;
+        },
+
+        getItemCardListElement: function () {
+          if (!this.itemCardListElement) {
+            this.itemCardListElement = document.getElementById('item-card-list-block');
+          }
+
+          return this.itemCardListElement;
+        },
+
         activateAnimatedItemCard: function () {
           if (this.active) {
             return;
@@ -81,8 +125,13 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         setAnimatedItemCardToEndState: function () {
           this.getAnimatedItemCard().el.style.left = this.getAnimatedItemCard().endLeft;
           this.activateAnimatedItemCard();
-        },
+        }
+      };
 
+
+      /* Stack cards */
+
+      scope.stack.view = angular.extend({
         showNextItemCardFully: function (e, $event) {
           this.activateAnimatedItemCard();
 
@@ -90,7 +139,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.endLeft
           }, {
@@ -134,7 +182,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.defaultLeftValue
           }, {
@@ -157,7 +204,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.defaultLeft
           }, {
@@ -204,7 +250,6 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
 
           var animatedItemCard = this.getAnimatedItemCard();
 
-          //Velocity(animatedItemCard.el, 'stop');
           Velocity(animatedItemCard.el, {
             left: animatedItemCard.endLeftValue
           }, {
@@ -259,7 +304,207 @@ app.stack.directive('stack', ['$rootScope', '$state', '$window', function ($root
         _broadcastPreviousItemHidden: function () {
           scope.$broadcast('stack:previousItemHidden');
         }
-      };
+      }, scope.stack.view);
+
+
+      /* Stack expand view */
+
+      scope.stack.view = angular.extend({
+        verticalDistance: 0,
+
+        resetStartPoint: function () {
+          this.touchStartX = null;
+          this.touchStartY = null;
+        },
+
+        expandView: function (e) {
+          if (this.isExpanded()) {
+            return;
+          }
+
+          if (this.isExpandingFully() || this.isShowingPartially()) {
+            return;
+          }
+
+          var touch = e.changedTouches[0] || e.touches[0];
+          var x = touch.pageX;
+          var y = touch.pageY;
+
+          if (this.touchStartX === null && this.touchStartY === null) {
+            this.touchStartX = x;
+            this.touchStartY = y;
+          }
+
+          this.deltaX = this.touchStartX - x;
+          this.deltaY = this.touchStartY - y;
+
+          var absDeltaY = Math.abs(this.deltaY);
+          var absDeltaX = Math.abs(this.deltaX);
+
+          if (this.deltaY < 0 && absDeltaY > absDeltaX) {
+            this.expandViewPartially();
+          }
+        },
+
+        expandViewFully: function () {
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          var el = this.getStackElement();
+          var listEl = this.getItemCardListElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+          var translateY = this.getWindowHeight();
+
+          this.expandingFully = true;
+
+          Velocity(listEl, {
+            opacity: 1
+          }, {
+            duration: 1
+          });
+
+          Velocity(el, {
+            translateY: translateY,
+            scale: 0
+          }, {
+            duration: 150,
+            complete: function () {
+              this.expandingPatially = false;
+              this.expandingFully = false;
+              this._broadcastExpandedView();
+            }.bind(this)
+          });
+        },
+
+        expandViewPartially: function () {
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          if (!this.isExpandingPartially()) {
+            this.expandingPatially = true;
+            this._broadcastExpandingViewPartially();
+          }
+
+          var el = this.getStackElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+          var height = this.getWindowHeight();
+          var translateY = Math.min(0, this.deltaY);
+          var scale = translateY !== 0 ? Math.min(1, 1 - Math.abs(this.deltaY) / height) : 1;
+          var opacity = 1 - scale;
+
+          Velocity(el, {
+            translateY: -translateY,
+            scale: scale
+          }, {
+            duration: 1
+          });
+
+          Velocity(fakeListEl, {
+            opacity: opacity
+          }, {
+            duration: 1
+          });
+        },
+
+        endExpandingPartially: function () {
+          if (!this.isExpandingPartially()) {
+            return;
+          }
+
+          if (this.isExpandingFully()) {
+            return;
+          }
+
+          var stackEl = this.getStackElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+
+          var absDeltaY = Math.abs(this.deltaY);
+
+          if (absDeltaY > this.getWindowHeight() / 4) {
+            this.expandViewFully();
+          } else {
+            Velocity(stackEl, {
+              translateY: 0,
+              scale: 1
+            }, {
+              duration: 50,
+              complete: function () {
+                this.expandingFully = false;
+                this.expandingPatially = false;
+              }.bind(this)
+            });
+
+            Velocity(fakeListEl, {
+              opacity: 0
+            }, {
+              duration: 50
+            });
+          }
+        },
+
+        stackedView: function () {
+          var stackEl = this.getStackElement();
+          var listEl = this.getItemCardListElement();
+          var fakeListEl = this.getFakeItemCardListElement();
+
+          Velocity(fakeListEl, {
+            opacity: 0
+          }, {
+            duration: 1
+          });
+
+          Velocity(listEl, {
+            opacity: 0
+          }, {
+            duration: 150,
+            display: 'inline-block',
+            complete: function () {
+
+              this._broadcastStackedView();
+
+              Velocity(stackEl, {
+                translateY: 0,
+                scale: 1
+              }, {
+                duration: 200,
+                display: 'inline-block',
+                complete: function () {
+                }.bind(this)
+              });
+
+            }.bind(this)
+          });
+        },
+
+        isExpandingPartially: function () {
+          return this.expandingPatially;
+        },
+
+        isExpandingFully: function () {
+          return this.expandingFully;
+        },
+
+        isExpanded: function () {
+          return scope.stack.isExpandedView();
+        },
+
+        _broadcastStackedView: function () {
+          scope.$broadcast('stack:stackedView');
+        },
+
+        _broadcastExpandedView: function () {
+          scope.$broadcast('stack:expandedView');
+        },
+
+        _broadcastExpandingViewPartially: function () {
+          scope.$broadcast('stack:expandingViewPartially');
+        }
+      }, scope.stack.view);
+
+
+      /* Initialize */
 
       scope.stack.view.initialize();
     }
